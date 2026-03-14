@@ -88,7 +88,7 @@
 
             <t t-if="hbl_is_landing and hbl_sections">
                 <t t-foreach="hbl_sections" t-as="hbl_sec">
-                    <div class="hbl-section mb-5">
+                    <div class="hbl-section mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h2 class="mb-0 section-title" t-esc="hbl_sec['title']"/>
                             <a t-att-href="hbl_sec['view_all_url']"
