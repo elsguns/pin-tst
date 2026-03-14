@@ -1,0 +1,164 @@
+<odoo>
+
+    <!-- ============================================================
+         HBL section product card — matches existing shop card styling
+         ============================================================ -->
+    <template id="hbl_product_card" name="HBL Product Card">
+        <div class="o_wsale_product_grid_wrapper position-relative h-100">
+            <form action="/shop/cart/update" method="post"
+                  class="oe_product_cart h-100 d-flex"
+                  t-att-data-publish="hbl_product.website_published and 'on' or 'off'"
+                  itemscope="itemscope" itemtype="http://schema.org/Product">
+
+                <div class="oe_product_image position-relative flex-grow-0 overflow-hidden d-flex align-items-center justify-content-center"
+                     style="height: 200px;">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <a t-att-href="'/shop/%s' % slug(hbl_product)"
+                       class="oe_product_image_link d-flex align-items-center justify-content-center w-100 h-100"
+                       itemprop="url" contenteditable="false">
+                        <t t-set="image_holder" t-value="hbl_product._get_image_holder()"/>
+                        <span t-field="image_holder.image_1920"
+                              t-options="{'widget': 'image', 'preview_image': 'image_512',
+                                          'itemprop': 'image',
+                                          'class': 'img img-fluid h-100 w-100 position-absolute',
+                                          'alt_field': 'name'}"
+                              class="oe_product_image_img_wrapper d-flex justify-content-center align-items-center w-100 h-100"/>
+                        <t t-set="ribbon" t-value="hbl_product.website_ribbon_id"/>
+                        <span t-if="ribbon"
+                              t-attf-class="o_ribbon o_not_editable #{ribbon.html_class or ''}"
+                              t-attf-style="#{ribbon.text_color and ('color: %s; ' % ribbon.text_color)}#{ribbon.bg_color and ('background-color: %s' % ribbon.bg_color)}"
+                              t-out="ribbon.html or ''"/>
+                    </a>
+                </div>
+
+                <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
+                    <div class="o_wsale_product_information_text flex-grow-1"
+                         style="min-height: 3.6em; max-height: 3.6em; overflow: hidden;">
+                        <h6 class="o_wsale_products_item_title mb-2">
+                            <a class="text-primary text-decoration-none product-card-title"
+                               itemprop="name"
+                               t-att-href="'/shop/%s' % slug(hbl_product)"
+                               t-att-content="hbl_product.name"
+                               t-field="hbl_product.name"/>
+                        </h6>
+                    </div>
+                    <div class="o_wsale_product_sub d-flex justify-content-between align-items-end pb-1">
+                        <div class="o_wsale_product_btn">
+                            <t t-set="hbl_variant_id" t-value="hbl_product._get_first_possible_variant_id()"/>
+                            <t t-if="hbl_variant_id">
+                                <input name="product_id" t-att-value="hbl_variant_id" type="hidden"/>
+                                <t t-if="hbl_pv.get('price_reduce') or not website.prevent_zero_price_sale">
+                                    <a t-if="hbl_product._website_show_quick_add()"
+                                       href="#" role="button"
+                                       class="btn btn-primary a-submit"
+                                       aria-label="Winkelmandje" title="Winkelmandje">
+                                        <span class="fa fa-shopping-cart"/>
+                                    </a>
+                                </t>
+                            </t>
+                        </div>
+                        <div class="product_price" itemprop="offers" itemscope="itemscope" itemtype="http://schema.org/Offer">
+                            <t t-if="hbl_pv and hbl_pv.get('base_price') and hbl_pv['base_price'] > hbl_pv.get('price_reduce', 0) and (hbl_pv.get('price_reduce') or not website.prevent_zero_price_sale)">
+                                <del class="text-muted me-1 h6 mb-0" style="white-space: nowrap;">
+                                    <em class="small"
+                                        t-esc="hbl_pv['base_price']"
+                                        t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                                </del>
+                            </t>
+                            <span class="h6 mb-0"
+                                  t-if="hbl_pv and (hbl_pv.get('price_reduce') or not website.prevent_zero_price_sale)"
+                                  t-esc="hbl_pv.get('price_reduce', 0)"
+                                  t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                            <span itemprop="price" style="display:none;"
+                                  t-esc="hbl_pv.get('price_reduce', 0)" t-if="hbl_pv"/>
+                            <span itemprop="priceCurrency" style="display:none;"
+                                  t-esc="website.currency_id.name"/>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </template>
+
+    <!-- ============================================================
+         Shop homepage: attribute-based product sections for HBL.
+         ============================================================ -->
+    <template id="hbl_shop_sections" name="HBL Shop Sections" inherit_id="website_sale.products">
+        <xpath expr="//div[hasclass('o_wsale_products_grid_table_wrapper')]" position="replace">
+
+            <t t-if="hbl_is_landing and hbl_sections">
+                <t t-foreach="hbl_sections" t-as="hbl_sec">
+                    <div class="hbl-section mb-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="mb-0 section-title" t-esc="hbl_sec['title']"/>
+                            <a t-att-href="hbl_sec['view_all_url']"
+                               class="btn btn-link">
+                                Bekijk alles <i class="fa fa-arrow-right ms-1"/>
+                            </a>
+                        </div>
+                        <div class="row mx-0">
+                            <t t-foreach="hbl_sec['product_list']" t-as="hbl_product">
+                                <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 ccard">
+                                    <t t-call="website_sale_products_HBL.hbl_product_card">
+                                        <t t-set="hbl_product" t-value="hbl_product"/>
+                                        <t t-set="hbl_pv" t-value="hbl_sec['price_map'].get(hbl_product.id, {})"/>
+                                    </t>
+                                </div>
+                            </t>
+                            <t t-if="not hbl_sec['product_list']">
+                                <div class="col-12">
+                                    <p class="text-muted">Geen producten in deze sectie.</p>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </t>
+
+            <t t-elif="products">
+                <!-- Default grid: responsive 6 per row -->
+                <div class="o_wsale_products_grid_table_wrapper pt-3 pt-lg-0"
+                     t-att-data-ppg="ppg" t-att-data-ppr="ppr"
+                     t-att-data-default-sort="website.shop_default_sort">
+                    <t t-set="all_products" t-value="[td for tr in bins for td in tr if td]"/>
+                    <div class="row mx-0">
+                        <t t-foreach="all_products" t-as="td_product">
+                            <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 oe_product ccard"
+                                 t-att-data-ribbon-id="td_product['ribbon'].id">
+                                <div class="o_wsale_product_grid_wrapper position-relative h-100">
+                                    <t t-call="website_sale.products_item">
+                                        <t t-set="product" t-value="td_product['product']"/>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+
+            <div t-else="" t-nocache="get the actual search" class="text-center text-muted mt128 mb256">
+                <t t-if="not search">
+                    <h3 class="mt8">No product defined</h3>
+                    <p t-if="category">No product defined in this category.</p>
+                </t>
+                <t t-else="">
+                    <h3 class="mt8">No results</h3>
+                    <p>No results for "<strong t-esc='search'/>"<t t-if="category"> in category "<strong t-esc="category.display_name"/>"</t>.</p>
+                </t>
+                <p t-ignore="true" groups="sales_team.group_sale_manager">Click <i>'New'</i> in the top-right corner to create your first product.</p>
+            </div>
+
+        </xpath>
+
+        <!-- Remove the original t-else that's now orphaned -->
+        <xpath expr="//div[hasclass('text-center','text-muted','mt128')]" position="replace"/>
+
+        <!-- Hide pager on landing page -->
+        <xpath expr="//div[hasclass('products_pager')]" position="attributes">
+            <attribute name="t-att-class">'products_pager d-flex justify-content-center pt-5 pb-3' + (' d-none' if hbl_is_landing else '')</attribute>
+        </xpath>
+
+    </template>
+
+</odoo>
