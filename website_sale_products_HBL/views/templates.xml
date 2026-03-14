@@ -11,7 +11,7 @@
                   itemscope="itemscope" itemtype="http://schema.org/Product">
 
                 <div class="oe_product_image position-relative flex-grow-0 overflow-hidden d-flex align-items-center justify-content-center"
-                     style="height: 200px;">
+                     style="height: 240px;">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <a t-att-href="'/shop/%s' % slug(hbl_product)"
                        class="oe_product_image_link d-flex align-items-center justify-content-center w-100 h-100"
