@@ -32,8 +32,7 @@
                 </div>
 
                 <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
-                    <div class="o_wsale_product_information_text flex-grow-1"
-                         style="min-height: 3.6em; max-height: 3.6em; overflow: hidden;">
+                    <div class="o_wsale_product_information_text flex-grow-1">
                         <h6 class="o_wsale_products_item_title mb-2">
                             <a class="text-primary text-decoration-none product-card-title"
                                itemprop="name"
