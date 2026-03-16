@@ -9,7 +9,15 @@
                   class="oe_product_cart h-100 d-flex"
                   t-att-data-publish="hbl_product.website_published and 'on' or 'off'"
                   itemscope="itemscope" itemtype="http://schema.org/Product">
-
+                <div class="o_wsale_product_information_text flex-grow-1">
+                        <h6 class="o_wsale_products_item_title mb-2">
+                            <a class="text-primary text-decoration-none product-card-title"
+                               itemprop="name"
+                               t-att-href="'/shop/%s' % slug(hbl_product)"
+                               t-att-content="hbl_product.name"
+                               t-field="hbl_product.name"/>
+                        </h6>
+                    </div>
                 <div class="oe_product_image position-relative flex-grow-0 overflow-hidden d-flex align-items-center justify-content-center"
                      style="height: 240px;">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
