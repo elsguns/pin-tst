@@ -127,7 +127,7 @@
                                  t-att-data-ribbon-id="td_product['ribbon'].id">
                                 <div class="o_wsale_product_grid_wrapper position-relative h-100">
                                     <!--<t t-call="website_sale.products_item">-->
-                                    <t t-call="website_sale_products_HBL.products_item">
+                                    <t t-call="website_sale_products_HBL.hbl_product_card">
                                         <t t-set="product" t-value="td_product['product']"/>
                                     </t>
                                 </div>
