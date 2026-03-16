@@ -47,6 +47,10 @@ class WebsiteSaleProductsHBL(WebsiteSale):
 
             hbl_sections = []
             for sec in self.SECTIONS:
+                ptav = request.env['product.template.attribute.value'].search([
+                    ('product_attribute_value_id', 'in', sec['attribute_value_ids']),
+                ])
+                product_ids = ptav.mapped('product_tmpl_id').ids
                 domain = [
                     ('sale_ok', '=', True),
                     ('website_published', '=', True),
