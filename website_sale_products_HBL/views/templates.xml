@@ -126,7 +126,8 @@
                             <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 oe_product ccard"
                                  t-att-data-ribbon-id="td_product['ribbon'].id">
                                 <div class="o_wsale_product_grid_wrapper position-relative h-100">
-                                    <t t-call="website_sale.products_item">
+                                    <!--<t t-call="website_sale.products_item">-->
+                                    <t t-call="website_sale_products_HBL.products_item">
                                         <t t-set="product" t-value="td_product['product']"/>
                                     </t>
                                 </div>
