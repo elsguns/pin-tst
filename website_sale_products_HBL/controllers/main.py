@@ -14,13 +14,13 @@ class WebsiteSaleProductsHBL(WebsiteSale):
             'title': 'Nieuw',
             'attribute_value_ids': [8, 7],
             'attribs': ['4-8', '4-7'],
-            'limit': 6,
+            'limit': 12,
         },
         {
             'title': 'Aangekondigd',
             'attribute_value_ids': [9],
             'attribs': ['4-9'],
-            'limit': 6,
+            'limit': 12,
         },
     ]
 
