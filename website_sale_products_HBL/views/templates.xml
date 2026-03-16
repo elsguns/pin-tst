@@ -40,15 +40,7 @@
                 </div>
 
                 <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
-                    <div class="o_wsale_product_information_text flex-grow-1">
-                        <h6 class="o_wsale_products_item_title mb-2">
-                            <a class="text-primary text-decoration-none product-card-title"
-                               itemprop="name"
-                               t-att-href="'/shop/%s' % slug(hbl_product)"
-                               t-att-content="hbl_product.name"
-                               t-field="hbl_product.name"/>
-                        </h6>
-                    </div>
+                    
                     <div class="o_wsale_product_sub d-flex justify-content-between align-items-end pb-1">
                         <div class="o_wsale_product_btn">
                             <t t-set="hbl_variant_id" t-value="hbl_product._get_first_possible_variant_id()"/>
