@@ -60,7 +60,7 @@ class WebsiteSaleProductsHBL(WebsiteSale):
                 products = ProductTemplate.search(
                     domain, limit=sec['limit'], order='create_date desc, name asc',
                 )
-
+                _logger.info("HBL section '%s': found %d products (limit=%d)", sec['title'], len(products), sec['limit'])
                 price_map = {}
                 if products:
                     price_map = products._get_sales_prices(pricelist, fiscal_position)
