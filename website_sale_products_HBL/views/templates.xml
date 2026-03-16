@@ -190,8 +190,8 @@
 <template id="hbl_section_heading"
           name="HBL: Section title on filtered pages"
           inherit_id="website_sale.products">
-    <xpath expr="//div[hasclass('products_header')]" position="before">
-        <h2 t-if="hbl_section_title" class="mb-3 section-title"
+    <xpath expr="//div[hasclass('products_header')]" position="after">
+        <h2 t-if="hbl_section_title" class="mb-3 mt-3 section-title"
             t-esc="hbl_section_title"/>
     </xpath>
 </template>
