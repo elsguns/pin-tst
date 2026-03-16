@@ -24,6 +24,11 @@ class WebsiteSaleProductsHBL(WebsiteSale):
         },
     ]
 
+    SECTION_TITLES = {
+        frozenset([8, 7]): 'Nieuw',
+        frozenset([9]): 'Aangekondigd',
+    }
+
     def _is_shop_landing(self, category, search, **post):
         if category or search:
             return False
@@ -51,16 +56,17 @@ class WebsiteSaleProductsHBL(WebsiteSale):
                     ('product_attribute_value_id', 'in', sec['attribute_value_ids']),
                 ])
                 product_ids = ptav.mapped('product_tmpl_id').ids
+
                 domain = [
+                    ('id', 'in', product_ids),
                     ('sale_ok', '=', True),
                     ('website_published', '=', True),
                     ('website_id', 'in', (False, website.id)),
-                    ('attribute_line_ids.value_ids', 'in', sec['attribute_value_ids']),
                 ]
                 products = ProductTemplate.search(
                     domain, limit=sec['limit'], order='create_date desc, name asc',
                 )
-                _logger.info("HBL section '%s': found %d products (limit=%d)", sec['title'], len(products), sec['limit'])
+
                 price_map = {}
                 if products:
                     price_map = products._get_sales_prices(pricelist, fiscal_position)
@@ -76,8 +82,22 @@ class WebsiteSaleProductsHBL(WebsiteSale):
 
             response.qcontext['hbl_sections'] = hbl_sections
             response.qcontext['hbl_is_landing'] = True
+            response.qcontext['hbl_section_title'] = ''
         else:
             response.qcontext['hbl_sections'] = []
             response.qcontext['hbl_is_landing'] = False
+
+            attrib_list = request.httprequest.args.getlist('attrib')
+            active_value_ids = set()
+            for a in attrib_list:
+                try:
+                    attr_id, val_id = a.split('-')
+                    active_value_ids.add(int(val_id))
+                except ValueError:
+                    pass
+
+            response.qcontext['hbl_section_title'] = self.SECTION_TITLES.get(
+                frozenset(active_value_ids), ''
+            )
 
         return response
