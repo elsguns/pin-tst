@@ -9,6 +9,8 @@ _logger = logging.getLogger(__name__)
 
 class WebsiteSaleProductsHBL(WebsiteSale):
 
+    TARGET_WEBSITE_ID = 2  # HBL website ID
+
     SECTIONS = [
         {
             'title': 'Nieuw',
@@ -43,6 +45,13 @@ class WebsiteSaleProductsHBL(WebsiteSale):
             page=page, category=category, search=search,
             min_price=min_price, max_price=max_price, ppg=ppg, **post,
         )
+
+        # Only apply HBL customizations on the HBL website
+        if request.website.id != self.TARGET_WEBSITE_ID:
+            response.qcontext.setdefault('hbl_sections', [])
+            response.qcontext.setdefault('hbl_is_landing', False)
+            response.qcontext.setdefault('hbl_section_title', '')
+            return response
 
         if self._is_shop_landing(category, search, **post):
             website = request.website

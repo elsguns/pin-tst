@@ -159,40 +159,64 @@
         </xpath>
 
     </template>
+
+    <!-- ============================================================
+         Move product title above image (shop grid cards)
+         ============================================================ -->
     <template id="hbl_products_item_title_top"
-          name="HBL: Title above image"
-          inherit_id="website_sale.products_item">
+              name="HBL: Title above image"
+              inherit_id="website_sale.products_item">
 
-    <!-- Remove title from its original location -->
-    <xpath expr="//div[hasclass('o_wsale_product_information_text')]" position="replace">
-    <!-- intentionally empty: title moved above image -->
-</xpath>
+        <!-- Remove title from its original location -->
+        <xpath expr="//div[hasclass('o_wsale_product_information_text')]" position="replace">
+            <!-- intentionally empty: title moved above image -->
+        </xpath>
 
-    <!-- Re-insert title above the image block -->
-    <xpath expr="//div[hasclass('oe_product_image')]" position="before">
-        <div class="o_wsale_product_information_text flex-grow-1">
-            <h6 class="o_wsale_products_item_title mb-2">
-                <a class="text-primary text-decoration-none product-card-title"
-                   itemprop="name"
-                   t-att-href="product_href"
-                   t-att-content="product.name"
-                   t-field="product.name"/>
-                <a t-if="not product.website_published" role="button"
-                   t-att-href="product_href"
-                   class="btn btn-sm btn-danger"
-                   title="This product is unpublished.">
-                    Unpublished
-                </a>
-            </h6>
-        </div>
-    </xpath>
-</template>
-<template id="hbl_section_heading"
-          name="HBL: Section title on filtered pages"
-          inherit_id="website_sale.products">
-    <xpath expr="//div[hasclass('products_header')]" position="after">
-        <h2 t-if="hbl_section_title" class="mb-3 mt-3 section-title"
-            t-esc="hbl_section_title"/>
-    </xpath>
-</template>
+        <!-- Re-insert title above the image block -->
+        <xpath expr="//div[hasclass('oe_product_image')]" position="before">
+            <div class="o_wsale_product_information_text flex-grow-1">
+                <h6 class="o_wsale_products_item_title mb-2">
+                    <a class="text-primary text-decoration-none product-card-title"
+                       itemprop="name"
+                       t-att-href="product_href"
+                       t-att-content="product.name"
+                       t-field="product.name"/>
+                    <a t-if="not product.website_published" role="button"
+                       t-att-href="product_href"
+                       class="btn btn-sm btn-danger"
+                       title="This product is unpublished.">
+                        Unpublished
+                    </a>
+                </h6>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- ============================================================
+         Section title on filtered shop pages (Bekijk alles)
+         ============================================================ -->
+    <template id="hbl_section_heading"
+              name="HBL: Section title on filtered pages"
+              inherit_id="website_sale.products">
+        <xpath expr="//div[hasclass('products_header')]" position="after">
+            <h2 t-if="hbl_section_title" class="mb-3 mt-3 section-title"
+                t-esc="hbl_section_title"/>
+        </xpath>
+    </template>
+
+    <!-- ============================================================
+         Bind all inheriting templates to the HBL website only
+         ============================================================ -->
+    <record id="hbl_shop_sections" model="ir.ui.view">
+        <field name="website_id" eval="2"/>
+    </record>
+
+    <record id="hbl_products_item_title_top" model="ir.ui.view">
+        <field name="website_id" eval="2"/>
+    </record>
+
+    <record id="hbl_section_heading" model="ir.ui.view">
+        <field name="website_id" eval="2"/>
+    </record>
+
 </odoo>
