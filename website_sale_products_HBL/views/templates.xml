@@ -165,8 +165,8 @@
 
     <!-- Remove title from its original location -->
     <xpath expr="//div[hasclass('o_wsale_product_information_text')]" position="replace">
-        <div class="o_wsale_product_information_text flex-grow-1"/>
-    </xpath>
+    <!-- intentionally empty: title moved above image -->
+</xpath>
 
     <!-- Re-insert title above the image block -->
     <xpath expr="//div[hasclass('oe_product_image')]" position="before">
