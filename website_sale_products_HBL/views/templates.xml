@@ -124,11 +124,12 @@
                     <div class="row mx-0">
                         <t t-foreach="all_products" t-as="td_product">
                             <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4 oe_product ccard"
-                                t-att-data-ribbon-id="td_product['ribbon'].id">
-                                <t t-call="website_sale_products_HBL.hbl_product_card">
-                                    <t t-set="hbl_product" t-value="td_product['product']"/>
-                                    <t t-set="hbl_pv" t-value="hbl_sec['price_map'].get(td_product['product'].id, {}) if hbl_sec else {}"/>
-                                </t>
+                                 t-att-data-ribbon-id="td_product['ribbon'].id">
+                                <div class="o_wsale_product_grid_wrapper position-relative h-100">
+                                    <t t-call="website_sale.products_item">
+                                        <t t-set="product" t-value="td_product['product']"/>
+                                    </t>
+                                </div>
                             </div>
                         </t>
                     </div>
@@ -158,5 +159,32 @@
         </xpath>
 
     </template>
+    <template id="hbl_products_item_title_top"
+          name="HBL: Title above image"
+          inherit_id="website_sale.products_item">
 
+    <!-- Remove title from its original location -->
+    <xpath expr="//div[hasclass('o_wsale_product_information_text')]" position="replace">
+        <div class="o_wsale_product_information_text flex-grow-1"/>
+    </xpath>
+
+    <!-- Re-insert title above the image block -->
+    <xpath expr="//div[hasclass('oe_product_image')]" position="before">
+        <div class="o_wsale_product_information_text flex-grow-1">
+            <h6 class="o_wsale_products_item_title mb-2">
+                <a class="text-primary text-decoration-none product-card-title"
+                   itemprop="name"
+                   t-att-href="product_href"
+                   t-att-content="product.name"
+                   t-field="product.name"/>
+                <a t-if="not product.website_published" role="button"
+                   t-att-href="product_href"
+                   class="btn btn-sm btn-danger"
+                   title="This product is unpublished.">
+                    Unpublished
+                </a>
+            </h6>
+        </div>
+    </xpath>
+</template>
 </odoo>
