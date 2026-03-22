@@ -7,7 +7,8 @@
         <xpath expr="//div[@id='product_details']" position="inside">
             <div class="vendor-stock-info mt-3">
                 <h6 class="mb-2">Availability</h6>
-                <t t-set="avail" t-value="product.sudo().x_studio_availability_hbl"/>
+                <t t-set="avail_fields" t-value="product.sudo().fields_get(['x_studio_availability_hbl'])"/>
+                <t t-set="avail" t-value="dict(avail_fields['x_studio_availability_hbl']['selection']).get(product.sudo().x_studio_availability_hbl)"/>
                 <p t-if="avail" class="mb-2">
                     <strong>Status:</strong> <span t-out="avail"/>
                 </p>
