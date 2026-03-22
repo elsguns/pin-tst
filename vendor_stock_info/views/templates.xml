@@ -38,6 +38,9 @@
                         </t>
                     </tbody>
                 </table>
+                <p t-if="availability_msg" class="mb-2 fw-bold text-success">
+                    <span t-out="availability_msg"/>
+                </p>
             </div>
         </xpath>
     </template>
