@@ -10,7 +10,9 @@
                 <t t-set="avail_fields" t-value="product.sudo().fields_get(['x_studio_availability_hbl'])"/>
                 <t t-set="avail" t-value="dict(avail_fields['x_studio_availability_hbl']['selection']).get(product.sudo().x_studio_availability_hbl)"/>
                 <p t-if="avail" class="mb-2">
-                    <strong>Status:</strong> <span t-out="avail"/>
+                    <strong>Status:</strong>
+                    <span t-out="product.sudo().x_studio_availability_hbl"/> -
+                    <span t-out="avail"/>
                 </p>
                 <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
                     <thead>
