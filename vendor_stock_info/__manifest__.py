@@ -6,7 +6,6 @@
     'depends': ['product', 'purchase'],
     'data': [
         'views/product_supplierinfo_views.xml',
-        'views/product_template_views.xml',
     ],
     'installable': True,
     'application': False,
