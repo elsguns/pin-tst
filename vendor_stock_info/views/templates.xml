@@ -5,9 +5,13 @@
               inherit_id="website_sale.product"
               name="Vendor Stock Info">
         <xpath expr="//div[@id='product_details']" position="inside">
-            <div class="vendor-stock-info mt-3" t-if="vendor_infos">
+            <div class="vendor-stock-info mt-3">
                 <h6 class="mb-2">Availability</h6>
-                <table class="table table-sm table-striped mb-0">
+                <t t-set="avail" t-value="product.sudo().x_studio_availability_hbl"/>
+                <p t-if="avail" class="mb-2">
+                    <strong>Status:</strong> <span t-out="avail"/>
+                </p>
+                <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
                     <thead>
                         <tr>
                             <th>Vendor</th>
