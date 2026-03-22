@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add vendor_stock to the supplierinfo tree view used inside product form -->
+    <record id="view_product_supplierinfo_tree_vendor_stock" model="ir.ui.view">
+        <field name="name">product.supplierinfo.tree.vendor_stock</field>
+        <field name="model">product.supplierinfo</field>
+        <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="delay" position="after">
+                <field name="vendor_stock"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>
