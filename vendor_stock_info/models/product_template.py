@@ -18,13 +18,3 @@ class ProductTemplate(models.Model):
                 ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY)
             )
         return domain
-
-    def _search_get_detail(self, website, order, options):
-        _logger.info('VENDOR_STOCK _search_get_detail called for website %s', website.id)
-        result = super()._search_get_detail(website, order, options)
-        if website.id == HBL_WEBSITE_ID:
-            result['base_domain'].append([
-                ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY)
-            ])
-            _logger.info('VENDOR_STOCK base_domain AFTER: %s', result['base_domain'])
-        return result
