@@ -1,12 +1,22 @@
+from odoo.http import request
+from werkzeug.exceptions import NotFound
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 
 PINCEEL_VENDOR_ID = 4668
+HBL_VISIBLE_AVAILABILITY = ['A', 'B', 'C', 'T', 'R']
+HBL_WEBSITE_ID = 2
 
 
 class WebsiteSaleVendorStock(WebsiteSale):
 
     def _prepare_product_values(self, product, category, search, **kwargs):
+        # Block detail page for hidden products on HBL
+        if (request.website.id == HBL_WEBSITE_ID
+                and product.x_studio_availability_hbl not in HBL_VISIBLE_AVAILABILITY):
+            raise NotFound()
+
         values = super()._prepare_product_values(product, category, search, **kwargs)
+
         vendor_infos = product.sudo().seller_ids.sorted('sequence').read([
             'partner_id', 'vendor_stock', 'delay',
         ])
