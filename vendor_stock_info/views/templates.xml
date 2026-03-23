@@ -1,48 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="product_vendor_stock_info"
-              inherit_id="website_sale.product"
-              name="Vendor Stock Info">
-        <xpath expr="//div[@id='product_details']" position="inside">
-            <div class="vendor-stock-info mt-3">
-                <h6 class="mb-2">Availability</h6>
-                <t t-set="avail_fields" t-value="product.sudo().fields_get(['x_studio_availability_hbl'])"/>
-                <t t-set="avail" t-value="dict(avail_fields['x_studio_availability_hbl']['selection']).get(product.sudo().x_studio_availability_hbl)"/>
-                <p t-if="avail" class="mb-2">
-                    <strong>Status:</strong>
-                    <span t-out="product.sudo().x_studio_availability_hbl"/> -
-                    <span t-out="avail"/>
-                </p>
-                <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>Vendor</th>
-                            <th class="text-center">Stock</th>
-                            <th class="text-center">Delivery (days)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <t t-foreach="vendor_infos" t-as="vi">
+    <record id="product_vendor_stock_info" model="ir.ui.view">
+        <field name="name">Vendor Stock Info</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="website_sale.product"/>
+        <field name="website_id" eval="2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='product_details']" position="inside">
+                <div class="vendor-stock-info mt-3">
+                    <h6 class="mb-2">Availability</h6>
+                    <t t-set="avail_fields" t-value="product.sudo().fields_get(['x_studio_availability_hbl'])"/>
+                    <t t-set="avail" t-value="dict(avail_fields['x_studio_availability_hbl']['selection']).get(product.sudo().x_studio_availability_hbl)"/>
+                    <p t-if="avail" class="mb-2">
+                        <strong>Status:</strong>
+                        <span t-out="product.sudo().x_studio_availability_hbl"/> -
+                        <span t-out="avail"/>
+                    </p>
+                    <p t-if="availability_msg" class="mb-2 fw-bold text-success">
+                        <span t-out="availability_msg"/>
+                    </p>
+                    <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
+                        <thead>
                             <tr>
-                                <td t-out="vi['partner_id'][1]"/>
-                                <td class="text-center">
-                                    <span t-if="vi['vendor_stock'] &gt; 0"
-                                          class="badge text-bg-success"
-                                          t-out="vi['vendor_stock']"/>
-                                    <span t-else=""
-                                          class="badge text-bg-secondary">0</span>
-                                </td>
-                                <td class="text-center" t-out="vi['delay']"/>
+                                <th>Vendor</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-center">Delivery (days)</th>
                             </tr>
-                        </t>
-                    </tbody>
-                </table>
-                <p t-if="availability_msg" class="mb-2 fw-bold text-success">
-                    <span t-out="availability_msg"/>
-                </p>
-            </div>
-        </xpath>
-    </template>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="vendor_infos" t-as="vi">
+                                <tr>
+                                    <td t-out="vi['partner_id'][1]"/>
+                                    <td class="text-center">
+                                        <span t-if="vi['vendor_stock'] &gt; 0"
+                                              class="badge text-bg-success"
+                                              t-out="vi['vendor_stock']"/>
+                                        <span t-else=""
+                                              class="badge text-bg-secondary">0</span>
+                                    </td>
+                                    <td class="text-center" t-out="vi['delay']"/>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>
