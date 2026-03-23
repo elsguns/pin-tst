@@ -6,8 +6,9 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 
 _logger = logging.getLogger(__name__)
 
-HBL_VISIBLE_AVAILABILITY = ['A', 'B', 'C', 'T', 'R']
-HBL_WEBSITE_ID = 2
+from odoo.addons.vendor_stock_info.models.product_template import (
+    HBL_VISIBLE_AVAILABILITY, HBL_WEBSITE_ID,
+)
 
 class WebsiteSaleProductsHBL(WebsiteSale):
 

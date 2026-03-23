@@ -1,10 +1,11 @@
 from odoo.http import request
 from werkzeug.exceptions import NotFound
 from odoo.addons.website_sale.controllers.main import WebsiteSale
-
+from odoo.addons.vendor_stock_info.models.product_template import (
+    HBL_VISIBLE_AVAILABILITY, HBL_WEBSITE_ID, 
+)
 PINCEEL_VENDOR_ID = 4668
-HBL_VISIBLE_AVAILABILITY = ['A', 'B', 'C', 'T', 'R']
-HBL_WEBSITE_ID = 2
+
 
 
 class WebsiteSaleVendorStock(WebsiteSale):

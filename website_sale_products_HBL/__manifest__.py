@@ -3,7 +3,7 @@
     'version': '17.0.2.0.0',
     'category': 'Website/Website',
     'summary': 'Shop homepage with attribute-based product sections for Het Besloten Land',
-    'depends': ['website_sale'],
+    'depends': ['website_sale', 'vendor_stock_info'],
     'data': [
         'views/templates.xml',
     ],
