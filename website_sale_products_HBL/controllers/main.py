@@ -6,6 +6,8 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 
 _logger = logging.getLogger(__name__)
 
+HBL_VISIBLE_AVAILABILITY = ['A', 'B', 'C', 'T', 'R']
+HBL_WEBSITE_ID = 2
 
 class WebsiteSaleProductsHBL(WebsiteSale):
 
@@ -69,7 +71,7 @@ class WebsiteSaleProductsHBL(WebsiteSale):
                 domain = [
                     ('id', 'in', product_ids),
                     ('sale_ok', '=', True),
-                    ('website_published', '=', True),
+                    ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY),
                     ('website_id', 'in', (False, website.id)),
                 ]
                 products = ProductTemplate.search(
