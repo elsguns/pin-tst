@@ -2,10 +2,10 @@ from odoo.http import request
 from werkzeug.exceptions import NotFound
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.vendor_stock_info.models.product_template import (
-    HBL_VISIBLE_AVAILABILITY, HBL_WEBSITE_ID, 
+    HBL_VISIBLE_AVAILABILITY, HBL_WEBSITE_ID,
 )
-PINCEEL_VENDOR_ID = 4668
 
+PINCEEL_VENDOR_ID = 4668
 
 
 class WebsiteSaleVendorStock(WebsiteSale):
@@ -23,6 +23,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
         ])
         values['vendor_infos'] = vendor_infos
         values['availability_msg'] = self._compute_availability_msg(vendor_infos)
+        values['own_stock'] = product.sudo().qty_available
         return values
 
     def _compute_availability_msg(self, vendor_infos):
