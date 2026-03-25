@@ -35,7 +35,8 @@
                             <tr>
                                 <th>Vendor</th>
                                 <th class="text-center">Stock</th>
-                                <th class="text-center">Delivery (days)</th>
+                                <th class="text-center">Delay</th>
+                                <th class="text-center">ETA</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -50,6 +51,7 @@
                                               class="badge text-bg-secondary">0</span>
                                     </td>
                                     <td class="text-center" t-out="vi['delay']"/>
+                                    <td class="text-center" t-out="vi['x_studio_eta']"/>
                                 </tr>
                             </t>
                         </tbody>

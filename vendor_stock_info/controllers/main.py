@@ -21,7 +21,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
         vendor_infos = product.sudo().seller_ids.filtered(
             lambda s: s.company_id.id == 2
         ).sorted('sequence').read([
-            'partner_id', 'vendor_stock', 'delay',
+            'partner_id', 'vendor_stock', 'delay', 'x_studio_eta',
         ])
         values['vendor_infos'] = vendor_infos
         values['availability_msg'] = self._compute_availability_msg(vendor_infos)
