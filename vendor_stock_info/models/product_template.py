@@ -3,7 +3,7 @@ _logger = logging.getLogger(__name__)
 
 from odoo import models, api
 
-HBL_VISIBLE_AVAILABILITY = ['A', 'B', 'C', 'T', 'R']
+HBL_VISIBLE_AVAILABILITY = ['A']
 HBL_WEBSITE_ID = 2
 
 
