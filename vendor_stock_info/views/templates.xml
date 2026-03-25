@@ -10,8 +10,10 @@
             <xpath expr="//div[@id='product_details']" position="inside">
                 <div class="vendor-stock-info mt-3">
                     <h6 class="mb-2">Lifecycle</h6>
-                    <t t-set="lifecycle" t-value="product.sudo().x_studio_lifecycle"/>
+                    <t t-set="lifecycle_fields" t-value="product.sudo().fields_get(['x_studio_lifecycle'])"/>
+                    <t t-set="lifecycle" t-value="dict(lifecycle_fields['x_studio_lifecycle']['selection']).get(product.sudo().x_studio_lifecycle)"/>
                     <p t-if="lifecycle" class="mb-2">
+                        <span t-out="product.sudo().x_studio_lifecycle"/> -
                         <span t-out="lifecycle"/>
                     </p>
                     <h6 class="mb-2">Availability</h6>
