@@ -219,6 +219,13 @@ class ISBNLookupWizard(models.TransientModel):
 
         for file_rec in files_to_download:
             try:
+                # Reset download status so action_download_file doesn't skip
+                if file_rec.is_downloaded:
+                    file_rec.write({
+                        'is_downloaded': False,
+                        'download_date': False,
+                        'attachment_id': False,
+                    })
                 file_rec.action_download_file()
                 downloaded += 1
                 _logger.info(f"Downloaded ({downloaded}/{len(files_to_download)}): {file_rec.name}")
