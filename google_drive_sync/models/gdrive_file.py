@@ -69,17 +69,12 @@ class GDriveFileRegistry(models.Model):
         self.ensure_one()
         
         if self.is_downloaded and self.attachment_id:
-            # File already downloaded, show notification
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Already Downloaded'),
-                    'message': _('File "%s" is already in attachments') % self.name,
-                    'type': 'info',
-                    'sticky': False,
-                }
-            }
+            # Reset for re-download
+            self.write({
+                'is_downloaded': False,
+                'download_date': False,
+                'attachment_id': False,
+            })
         
         # Get service
         ICPSudo = self.env['ir.config_parameter'].sudo()
