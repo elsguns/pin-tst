@@ -1,6 +1,6 @@
 {
     'name': 'Simple Google Drive',
-    'version': '17.0.2.0.3',
+    'version': '17.0.2.0.4',
     'category': 'Tools',
     'summary': 'Scan and selectively download Google Drive files',
     'description': """
