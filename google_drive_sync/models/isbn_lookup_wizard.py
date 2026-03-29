@@ -204,21 +204,12 @@ class ISBNLookupWizard(models.TransientModel):
         if not registry_ids:
             raise UserError(_('No files to download.'))
 
-        # Get registry records that aren't downloaded yet
+        # Get registry records (including already downloaded - files may have changed)
         Registry = self.env['gdrive.file.registry']
-        files_to_download = Registry.browse(registry_ids).filtered(lambda f: not f.is_downloaded)
+        files_to_download = Registry.browse(registry_ids)
 
         if not files_to_download:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Nothing to Download'),
-                    'message': _('All selected files are already downloaded.'),
-                    'type': 'info',
-                    'sticky': False,
-                }
-            }
+            raise UserError(_('No files found in registry.'))
 
         _logger.info(f"Starting download of {len(files_to_download)} files from registry")
 
@@ -256,10 +247,8 @@ class ISBNLookupWizard(models.TransientModel):
         }
 
     def action_select_all(self):
-        """Select all results that have files to download."""
-        self.result_ids.filtered(
-            lambda r: not r.already_downloaded
-        ).write({'selected': True})
+        """Select all results."""
+        self.result_ids.write({'selected': True})
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
