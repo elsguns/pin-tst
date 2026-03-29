@@ -17,6 +17,7 @@
                                t-att-content="hbl_product.name"
                                t-field="hbl_product.name"/>
                         </h6>
+                        <span t-field="hbl_product.x_studio_publish_week"/>
                     </div>
                 <div class="oe_product_image position-relative flex-grow-0 overflow-hidden d-flex align-items-center justify-content-center"
                      style="height: 240px;">
