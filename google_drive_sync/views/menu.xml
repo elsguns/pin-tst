@@ -5,6 +5,7 @@
         <menuitem id="menu_simple_gdrive_root" 
                   name="Google Drive" 
                   web_icon="fa fa-cloud"
+				  action="action_gdrive_file_registry"
                   sequence="1"/>
 
         <!-- File Registry (main view) -->
