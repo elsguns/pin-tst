@@ -189,7 +189,7 @@
                         Unpublished
                     </a>
                 </h6>
-                <span t-field="hbl_product.x_studio_publish_week"/>
+                <span t-field="product.x_studio_publish_week"/>
             </div>
         </xpath>
     </template>
