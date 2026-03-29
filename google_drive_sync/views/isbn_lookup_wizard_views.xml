@@ -2,75 +2,46 @@
 <odoo>
     <data>
 
-        <!-- ISBN Lookup Wizard Form -->
         <record id="view_gdrive_isbn_lookup_wizard_form" model="ir.ui.view">
             <field name="name">gdrive.isbn.lookup.wizard.form</field>
             <field name="model">gdrive.isbn.lookup.wizard</field>
             <field name="arch" type="xml">
                 <form string="ISBN Lookup">
-                    <!-- Upload state -->
-                    <group invisible="state != 'upload'">
-                        <group>
-                            <field name="csv_file" filename="csv_filename"/>
-                            <field name="csv_filename" invisible="1"/>
-                        </group>
-                        <group>
-                            <div class="text-muted">
-                                <p>Upload a CSV file with ISBNs (one column with header).</p>
-                                <p>The wizard will scan all Google Drive folders marked for 
-                                   "Product Images &amp; Descriptions" and look for .jpg and .txt 
-                                   files whose name starts with the ISBN.</p>
-                                <p>Only ISBNs with matching files will be shown in the results.</p>
-                            </div>
-                        </group>
+                    <!-- Start state -->
+                    <group invisible="state != 'start'">
+                        <div class="text-muted">
+                            <p>Click the button below to fetch all .jpg and .txt files 
+                               from folders marked for "Product Images &amp; Descriptions".</p>
+                        </div>
                     </group>
 
-                    <!-- Results state: summary -->
-                    <div class="alert alert-info" role="alert" invisible="state != 'results'">
-                        <strong>Scan Results: </strong>
-                        <field name="total_isbns_scanned" class="d-inline"/> ISBNs scanned — 
-                        <field name="total_matched" class="d-inline"/> with files found 
-                        (<field name="total_images" class="d-inline"/> images, 
-                        <field name="total_texts" class="d-inline"/> texts) — 
-                        <field name="total_not_found" class="d-inline"/> not found
+                    <!-- Files state: summary -->
+                    <div class="alert alert-info" role="alert" invisible="state != 'files'">
+                        <strong>Files found: </strong>
+                        <field name="total_files" class="d-inline"/>
                     </div>
 
-                    <!-- Results tree -->
-                    <field name="result_ids" invisible="state != 'results'"
-                           nolabel="1">
-                        <tree editable="bottom">
-                            <field name="selected"/>
-                            <field name="isbn"/>
-                            <field name="image_found"/>
-                            <field name="image_count" string="# Img"/>
-                            <field name="image_file_names" string="Image Files" optional="show"/>
-                            <field name="text_found"/>
-                            <field name="text_count" string="# Txt"/>
-                            <field name="text_file_names" string="Text Files" optional="show"/>
-                            <!-- Hidden fields -->
-                            <field name="image_file_ids" column_invisible="1"/>
-                            <field name="text_file_ids" column_invisible="1"/>
+                    <!-- Files tree -->
+                    <field name="file_ids" invisible="state != 'files'" nolabel="1">
+                        <tree>
+                            <field name="name"/>
+                            <field name="file_type"/>
+                            <field name="size"/>
+                            <field name="drive_file_id" optional="hide"/>
                         </tree>
                     </field>
 
                     <field name="state" invisible="1"/>
 
                     <footer>
-                        <button string="Scan Google Drive" name="action_scan" type="object"
-                                class="btn-primary" invisible="state != 'upload'"/>
-                        <button string="Select All" name="action_select_all" type="object"
-                                class="btn-secondary" invisible="state != 'results'"/>
-                        <button string="Deselect All" name="action_deselect_all" type="object"
-                                class="btn-secondary" invisible="state != 'results'"/>
-                        <button string="Download Selected" name="action_download" type="object"
-                                class="btn-primary" invisible="state != 'results'"/>
-                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        <button string="Fetch Files from Drive" name="action_fetch_files" type="object"
+                                class="btn-primary" invisible="state != 'start'"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>
             </field>
         </record>
 
-        <!-- Action to open the wizard -->
         <record id="action_gdrive_isbn_lookup" model="ir.actions.act_window">
             <field name="name">ISBN Lookup</field>
             <field name="res_model">gdrive.isbn.lookup.wizard</field>

@@ -6,6 +6,6 @@ access_gdrive_file_system,gdrive.file.system,model_gdrive_file,base.group_system
 access_gdrive_folder_selection_system,gdrive.folder.selection.system,model_gdrive_folder_selection,base.group_system,1,1,1,1
 access_gdrive_file_registry_system,gdrive.file.registry.system,model_gdrive_file_registry,base.group_system,1,1,1,1
 access_gdrive_isbn_lookup_wizard_user,gdrive.isbn.lookup.wizard.user,model_gdrive_isbn_lookup_wizard,base.group_user,1,1,1,1
-access_gdrive_isbn_lookup_result_user,gdrive.isbn.lookup.result.user,model_gdrive_isbn_lookup_result,base.group_user,1,1,1,1
 access_gdrive_isbn_lookup_wizard_system,gdrive.isbn.lookup.wizard.system,model_gdrive_isbn_lookup_wizard,base.group_system,1,1,1,1
-access_gdrive_isbn_lookup_result_system,gdrive.isbn.lookup.result.system,model_gdrive_isbn_lookup_result,base.group_system,1,1,1,1
+access_gdrive_isbn_lookup_file_user,gdrive.isbn.lookup.file.user,model_gdrive_isbn_lookup_file,base.group_user,1,1,1,1
+access_gdrive_isbn_lookup_file_system,gdrive.isbn.lookup.file.system,model_gdrive_isbn_lookup_file,base.group_system,1,1,1,1
