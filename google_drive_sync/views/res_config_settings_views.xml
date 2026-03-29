@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_inherit_google_drive" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.google.drive</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority">10</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app data-string="Google Drive Scan" string="Google Drive Scan" name="google_drive_sync">
+                        <block title="Google Drive - Scanner Settings" name="google_drive_settings_block_json">
+                            <div class="col-6 mb32" style="border-left: 1px solid #d8dadd; padding-left: 20px; padding-right: 16px;">
+                                <label for="gdrive_service_account_json"/> - 
+                                <field name="gdrive_json_status" readonly="1" nolabel="1" class="text-muted" style="display: inline;"/>
+                                <div>
+                                    <field name="gdrive_service_account_json" 
+                                        widget="text" 
+                                        placeholder="Paste JSON string here"
+                                        style="min-height: 100px; max-height: 100px; overflow-y: auto;"
+                                        class="mt16"/>
+                                </div>
+                                <div class="mt16">
+                                    <button name="action_discover_folders" 
+                                        string="Discover Folders" 
+                                        type="object" 
+                                        class="btn-primary"
+                                        icon="fa-search"/>
+                                    <div class="mt32">
+                                        <span class="o_form_label">Folders Discovered</span>
+                                        <div class="mt16">
+                                            <field name="folder_count" readonly="1"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>  
+                            
+                            <div class="col-6 mb32" style="border-left: 1px solid #d8dadd; padding-left: 20px;">    
+                                <label for="gdrive_sync_time_period"/> - 
+                                <span class="text-muted">How far back to look for new or modified files</span>
+                                <div class="mt16"><field name="gdrive_sync_time_period"/></div>
+                                
+                                <div class="mt32">
+                                    <label for="gdrive_auto_download_batch_size"/> - 
+                                    <span class="text-muted">Files to download per cron run</span>
+                                    <div class="mt16"><field name="gdrive_auto_download_batch_size"/></div>
+                                </div>
+                                
+                                <div class="mt32">
+                                    <button name="action_sync_now" 
+                                        string="Scan Files Now" 
+                                        type="object" 
+                                        class="btn-success"
+                                        icon="fa-search"
+                                        invisible="folder_count == 0"/>
+                                    <div class="text-muted mt8">
+                                        This will scan selected folders and create a list of available files.
+                                        You can then download individual files as needed.
+                                    </div>
+                                </div>
+                            </div>
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
+        
+        <!-- Keep existing tree and search views for folder selection -->
+        <record id="gdrive_folder_selection_tree_view" model="ir.ui.view">
+            <field name="name">gdrive.folder.selection.tree</field>
+            <field name="model">gdrive.folder.selection</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" create="false" delete="false">
+                    <field name="selected"/>
+                    <field name="download_product_content"/>
+                    <field name="download_import_data"/>
+                    <field name="folder_name" readonly="1"/>
+                    <field name="folder_path" readonly="1"/>
+                    <field name="last_sync" readonly="1" optional="show"/>
+                    <field name="folder_id" readonly="1" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="gdrive_folder_selection_search_view" model="ir.ui.view">
+            <field name="name">gdrive.folder.selection.search</field>
+            <field name="model">gdrive.folder.selection</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="folder_name"/>
+                    <field name="folder_path"/>
+                    <filter name="selected" string="Selected for Sync" domain="[('selected', '=', True)]"/>
+                    <filter name="not_selected" string="Not Selected" domain="[('selected', '=', False)]"/>
+                    <separator/>
+                    <filter name="synced_today" string="Synced Today" domain="[('last_sync', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter name="never_synced" string="Never Synced" domain="[('last_sync', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_selected" string="Selection Status" context="{'group_by': 'selected'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_gdrive_folder_selection" model="ir.actions.act_window">
+            <field name="name">Google Drive Folders</field>
+            <field name="res_model">gdrive.folder.selection</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="gdrive_folder_selection_search_view"/>
+            <field name="context">{'search_default_selected': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No folders discovered yet
+                </p>
+                <p>
+                    Go to Settings and click "Discover Folders" to scan your Google Drive.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

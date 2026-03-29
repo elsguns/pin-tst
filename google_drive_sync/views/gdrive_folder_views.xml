@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Tree view for folder selection with inline editing -->
+        <record id="gdrive_folder_selection_tree_view" model="ir.ui.view">
+            <field name="name">gdrive.folder.selection.tree</field>
+            <field name="model">gdrive.folder.selection</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" create="false" delete="false">
+                    <field name="selected"/>
+                    <field name="download_product_content"/>
+                    <field name="download_import_data"/>
+                    <field name="folder_name" readonly="1"/>
+                    <field name="folder_path" readonly="1"/>
+                    <field name="last_sync" readonly="1" optional="show"/>
+                    <field name="folder_id" readonly="1" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!-- Form view for folder selection (for better editing if needed) -->
+        <record id="gdrive_folder_selection_form_view" model="ir.ui.view">
+            <field name="name">gdrive.folder.selection.form</field>
+            <field name="model">gdrive.folder.selection</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="folder_name" readonly="1"/>
+                                <field name="folder_path" readonly="1"/>
+                                <field name="selected"/>
+                            </group>
+                            <group>
+                                <field name="folder_id" readonly="1"/>
+                                <field name="last_sync" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Auto-Download File Types">
+                            <field name="download_product_content"/>
+                            <field name="download_import_data"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Search view for folder selection -->
+        <record id="gdrive_folder_selection_search_view" model="ir.ui.view">
+            <field name="name">gdrive.folder.selection.search</field>
+            <field name="model">gdrive.folder.selection</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="folder_name"/>
+                    <field name="folder_path"/>
+                    <filter name="selected" string="Selected for Sync" domain="[('selected', '=', True)]"/>
+                    <filter name="not_selected" string="Not Selected" domain="[('selected', '=', False)]"/>
+                    <separator/>
+                    <filter name="synced_today" string="Synced Today" domain="[('last_sync', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter name="never_synced" string="Never Synced" domain="[('last_sync', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_selected" string="Selection Status" context="{'group_by': 'selected'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <!-- Action for folder selection -->
+        <record id="action_gdrive_folder_selection" model="ir.actions.act_window">
+            <field name="name">Google Drive Folders</field>
+            <field name="res_model">gdrive.folder.selection</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="gdrive_folder_selection_search_view"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No folders discovered yet
+                </p>
+                <p>
+                    Go to Settings and click "Discover Folders" to scan your Google Drive.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Server Action for Scanning Files (for Folder view) -->
+        <record id="action_scan_from_folders" model="ir.actions.server">
+            <field name="name">Scan Google Drive Files</field>
+            <field name="model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+action = env['gdrive.file'].sync_google_drive_files()
+            </field>
+        </record>
+        
+        <!-- Server action to select all folders -->
+        <record id="action_select_all_folders" model="ir.actions.server">
+            <field name="name">Select All</field>
+            <field name="model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    records.write({'selected': True})
+            </field>
+        </record>
+        
+        <!-- Server action to deselect all folders -->
+        <record id="action_deselect_all_folders" model="ir.actions.server">
+            <field name="name">Deselect All</field>
+            <field name="model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_model_id" ref="model_gdrive_folder_selection"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    records.write({'selected': False})
+            </field>
+        </record>
+    </data>
+</odoo>

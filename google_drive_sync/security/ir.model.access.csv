@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gdrive_file_user,gdrive.file.user,model_gdrive_file,base.group_user,1,0,0,0
+access_gdrive_folder_selection_user,gdrive.folder.selection.user,model_gdrive_folder_selection,base.group_user,1,1,0,0
+access_gdrive_file_registry_user,gdrive.file.registry.user,model_gdrive_file_registry,base.group_user,1,1,0,0
+access_gdrive_file_system,gdrive.file.system,model_gdrive_file,base.group_system,1,1,1,1
+access_gdrive_folder_selection_system,gdrive.folder.selection.system,model_gdrive_folder_selection,base.group_system,1,1,1,1
+access_gdrive_file_registry_system,gdrive.file.registry.system,model_gdrive_file_registry,base.group_system,1,1,1,1

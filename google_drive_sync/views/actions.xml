@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Settings Action -->
+        <record id="action_gdrive_sync_settings" model="ir.actions.act_window">
+            <field name="name">Google Drive Sync Settings</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{'module': 'google_drive_sync', 'bin_size': False}</field>
+        </record>
+
+     
+    
+    </data>
+</odoo>

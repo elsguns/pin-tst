@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main menu -->
+        <menuitem id="menu_simple_gdrive_root" 
+                  name="Google Drive" 
+                  web_icon="fa fa-cloud"
+                  sequence="1"/>
+
+        <!-- File Registry (main view) -->
+        <menuitem id="menu_gdrive_file_registry" 
+                  name="Files" 
+                  parent="menu_simple_gdrive_root"
+                  action="action_gdrive_file_registry"
+                  sequence="1"/>
+
+        <!-- Folder selection -->
+        <menuitem id="menu_gdrive_folders" 
+                  name="Folders" 
+                  parent="menu_simple_gdrive_root"
+                  action="action_gdrive_folder_selection"
+                  sequence="2"/>
+        <!-- ISBN Lookup -->
+        <menuitem id="menu_gdrive_isbn_lookup" 
+                  name="ISBN Lookup" 
+                  parent="menu_simple_gdrive_root"
+                  action="action_gdrive_isbn_lookup"
+                  sequence="3"/>
+
+        <!-- Settings menu -->
+        <menuitem id="menu_gdrive_sync_settings" 
+                name="Settings" 
+                parent="menu_simple_gdrive_root"
+                action="action_gdrive_sync_settings"
+                sequence="4"/>
+
+    </data>
+</odoo>

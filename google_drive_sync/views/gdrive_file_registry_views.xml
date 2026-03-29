@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server Action for Scanning (standalone, not bound) -->
+        <record id="action_scan_google_drive" model="ir.actions.server">
+            <field name="name">Scan Google Drive Files</field>
+            <field name="model_id" ref="model_gdrive_file"/>
+            <field name="state">code</field>
+            <field name="code">
+action = env['gdrive.file'].sync_google_drive_files()
+            </field>
+        </record>
+        
+        <record id="action_purge_registry" model="ir.actions.server">
+            <field name="name">Clear history</field>
+            <field name="model_id" ref="model_gdrive_file_registry"/>
+            <field name="state">code</field>
+            <field name="code">
+action = env['gdrive.file.registry'].action_purge_registry()
+            </field>
+        </record>
+        
+        <!-- Tree View for File Registry with button in control panel -->
+        <record id="gdrive_file_registry_tree_view" model="ir.ui.view">
+            <field name="name">gdrive.file.registry.tree</field>
+            <field name="model">gdrive.file.registry</field>
+            <field name="arch" type="xml">
+                <tree create="false" decoration-success="is_downloaded" decoration-info="not is_downloaded">
+                    <header>
+                        <button name="%(action_scan_google_drive)d" 
+                            type="action" 
+                            string="Scan" 
+                            class="btn-sm btn-primary"
+                            icon="fa-refresh"
+                            display="always"/>
+                        <button name="%(action_purge_registry)d" 
+                            type="action" 
+                            string="Clear" 
+                            class="btn-sm btn-primary"
+                            icon="fa-trash"
+                            display="always"/>
+                    </header>
+                    <field name="name"/>
+                    <field name="folder_path"/>
+                    <field name="size_display" string="Size"/>
+                    <field name="modified_time"/>
+                    <field name="created_time" optional="show"/>
+                    <field name="is_downloaded" widget="boolean_toggle" readonly="1"/>
+                    <field name="download_date" optional="show"/>
+                    <field name="mime_type" optional="hide"/>
+                    <field name="folder_name" optional="hide"/>
+                    <field name="can_download" invisible="1"/>
+                    <button name="action_download_file" 
+                            type="object" 
+                            string="Download" 
+                            class="btn-primary"
+                            icon="fa-download"
+                            invisible="is_downloaded"/>
+                    <button name="action_download_file" 
+                            type="object" 
+                            string="Re-download" 
+                            class="btn-secondary"
+                            icon="fa-refresh"
+                            invisible="not is_downloaded"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!-- Form View for File Registry -->
+        <record id="gdrive_file_registry_form_view" model="ir.ui.view">
+            <field name="name">gdrive.file.registry.form</field>
+            <field name="model">gdrive.file.registry</field>
+            <field name="priority">10</field>
+            <field name="arch" type="xml">
+                <form create="false" delete="false">
+                    <header>
+                        <button name="%(action_scan_google_drive)d" 
+                                type="action" 
+                                string="Scan for New Files" 
+                                class="btn-secondary"
+                                icon="fa-refresh"/>
+                        <button name="action_download_file" 
+                                type="object" 
+                                string="Download File" 
+                                class="btn-primary"
+                                invisible="is_downloaded"/>
+                        <button name="action_download_file" 
+                                type="object" 
+                                string="Re-download File" 
+                                class="btn-secondary"
+                                invisible="not is_downloaded"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group string="File Information">
+                                <field name="file_id" readonly="1"/>
+                                <field name="mime_type" readonly="1"/>
+                                <field name="size_display" readonly="1"/>
+                                <field name="modified_time" readonly="1"/>
+                                <field name="created_time" readonly="1"/>
+                            </group>
+                            <group string="Location">
+                                <field name="folder_name" readonly="1"/>
+                                <field name="folder_path" readonly="1"/>
+                                <field name="folder_id" readonly="1" groups="base.group_no_one"/>
+                            </group>
+                        </group>
+                        <group string="Download Status">
+                            <field name="is_downloaded" readonly="1"/>
+                            <field name="download_date" readonly="1" invisible="not is_downloaded"/>
+                            <field name="attachment_id" readonly="1" invisible="not is_downloaded"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Search View for File Registry -->
+        <record id="gdrive_file_registry_search_view" model="ir.ui.view">
+            <field name="name">gdrive.file.registry.search</field>
+            <field name="model">gdrive.file.registry</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="folder_path"/>
+                    <field name="folder_name"/>
+                    <filter name="not_downloaded" string="Not Downloaded" domain="[('is_downloaded', '=', False)]"/>
+                    <filter name="downloaded" string="Downloaded" domain="[('is_downloaded', '=', True)]"/>
+                    <separator/>
+                    <filter name="today" string="Modified Today" domain="[('modified_time', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter name="week" string="Modified This Week" domain="[('modified_time', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                    <separator/>
+                    <filter name="small_files" string="Small (&lt; 1MB)" domain="[('size', '&lt;', 1048576)]"/>
+                    <filter name="medium_files" string="Medium (1-10MB)" domain="[('size', '&gt;=', 1048576), ('size', '&lt;', 10485760)]"/>
+                    <filter name="large_files" string="Large (&gt; 10MB)" domain="[('size', '&gt;=', 10485760)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_folder" string="Folder" context="{'group_by': 'folder_path'}"/>
+                        <filter name="group_by_download_status" string="Download Status" context="{'group_by': 'is_downloaded'}"/>
+                        <filter name="group_by_modified" string="Modified Date" context="{'group_by': 'modified_time:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <!-- Action for File Registry -->
+        <record id="action_gdrive_file_registry" model="ir.actions.act_window">
+            <field name="name">Google Drive Files</field>
+            <field name="res_model">gdrive.file.registry</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="gdrive_file_registry_search_view"/>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <div class="o_view_nocontent_smiling_face">
+                    <p>No files found yet</p>
+                    <p class="mt16">
+                        <a type="action" name="%(action_scan_google_drive)d" class="btn btn-primary">
+                            <i class="fa fa-refresh"/> Scan Google Drive
+                        </a>
+                    </p>
+                    <p class="mt8 text-muted">
+                        Or configure folders first in Settings
+                    </p>
+                </div>
+            </field>
+        </record>
+        
+        <!-- Server Action for Mass Download -->
+        <record id="action_mass_download_files" model="ir.actions.server">
+            <field name="name">Download Selected Files</field>
+            <field name="model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+action = model.action_download_selected()
+            </field>
+        </record>
+        
+        <!-- Server Action to Mark as Downloaded (for admin use) -->
+        <record id="action_mark_as_downloaded" model="ir.actions.server">
+            <field name="name">Mark as Downloaded</field>
+            <field name="model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_view_types">list</field>
+            <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    records.write({'is_downloaded': True, 'download_date': fields.Datetime.now()})
+            </field>
+        </record>
+        
+        <!-- Server Action to Clear Downloaded Status (for admin use) -->
+        <record id="action_clear_downloaded_status" model="ir.actions.server">
+            <field name="name">Clear Downloaded Status</field>
+            <field name="model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_model_id" ref="model_gdrive_file_registry"/>
+            <field name="binding_view_types">list</field>
+            <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    records.write({'is_downloaded': False, 'download_date': False, 'attachment_id': False})
+            </field>
+        </record>
+    </data>
+</odoo>

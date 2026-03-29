@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ISBN Lookup Wizard Form -->
+        <record id="view_gdrive_isbn_lookup_wizard_form" model="ir.ui.view">
+            <field name="name">gdrive.isbn.lookup.wizard.form</field>
+            <field name="model">gdrive.isbn.lookup.wizard</field>
+            <field name="arch" type="xml">
+                <form string="ISBN Lookup">
+                    <!-- Upload state -->
+                    <group invisible="state != 'upload'">
+                        <group>
+                            <field name="csv_file" filename="csv_filename"/>
+                            <field name="csv_filename" invisible="1"/>
+                        </group>
+                        <group>
+                            <div class="text-muted">
+                                <p>Upload a CSV file with ISBNs (one column with header).</p>
+                                <p>The wizard will scan all Google Drive folders marked for 
+                                   "Product Images &amp; Descriptions" and look for .jpg and .txt 
+                                   files whose name starts with the ISBN.</p>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- Results state -->
+                    <group invisible="state != 'results'">
+                        <group>
+                            <field name="total_isbns"/>
+                            <field name="found_images"/>
+                            <field name="found_texts"/>
+                        </group>
+                    </group>
+
+                    <field name="result_ids" invisible="state != 'results'"
+                           nolabel="1">
+                        <tree editable="bottom" decoration-success="image_found or text_found"
+                              decoration-muted="not image_found and not text_found">
+                            <field name="selected"/>
+                            <field name="isbn"/>
+                            <field name="image_found"/>
+                            <field name="image_count" string="# Img"/>
+                            <field name="image_file_names" string="Image Files" optional="show"/>
+                            <field name="text_found"/>
+                            <field name="text_count" string="# Txt"/>
+                            <field name="text_file_names" string="Text Files" optional="show"/>
+                            <!-- Hidden fields -->
+                            <field name="image_file_ids" column_invisible="1"/>
+                            <field name="text_file_ids" column_invisible="1"/>
+                        </tree>
+                    </field>
+
+                    <field name="state" invisible="1"/>
+
+                    <footer>
+                        <button string="Scan Google Drive" name="action_scan" type="object"
+                                class="btn-primary" invisible="state != 'upload'"/>
+                        <button string="Select All Found" name="action_select_all" type="object"
+                                class="btn-secondary" invisible="state != 'results'"/>
+                        <button string="Deselect All" name="action_deselect_all" type="object"
+                                class="btn-secondary" invisible="state != 'results'"/>
+                        <button string="Download Selected" name="action_download" type="object"
+                                class="btn-primary" invisible="state != 'results'"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action to open the wizard -->
+        <record id="action_gdrive_isbn_lookup" model="ir.actions.act_window">
+            <field name="name">ISBN Lookup</field>
+            <field name="res_model">gdrive.isbn.lookup.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</odoo>
