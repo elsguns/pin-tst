@@ -3,6 +3,7 @@ import base64
 import csv
 import io
 import logging
+import time
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
@@ -26,17 +27,20 @@ class ISBNLookupWizard(models.TransientModel):
 
     result_ids = fields.One2many('gdrive.isbn.lookup.result', 'wizard_id', string='Results')
 
-    # Stats (computed)
-    total_isbns = fields.Integer('Total ISBNs', compute='_compute_stats', store=False)
-    found_images = fields.Integer('Images Found', compute='_compute_stats', store=False)
-    found_texts = fields.Integer('Texts Found', compute='_compute_stats', store=False)
+    # Summary fields
+    total_isbns_scanned = fields.Integer('Total ISBNs Scanned', readonly=True)
+    total_matched = fields.Integer('ISBNs with Files', compute='_compute_stats', store=False)
+    total_images = fields.Integer('Total Images Found', compute='_compute_stats', store=False)
+    total_texts = fields.Integer('Total Texts Found', compute='_compute_stats', store=False)
+    total_not_found = fields.Integer('ISBNs Not Found', compute='_compute_stats', store=False)
 
-    @api.depends('result_ids', 'result_ids.image_found', 'result_ids.text_found')
+    @api.depends('result_ids', 'result_ids.image_count', 'result_ids.text_count', 'total_isbns_scanned')
     def _compute_stats(self):
         for rec in self:
-            rec.total_isbns = len(rec.result_ids)
-            rec.found_images = len(rec.result_ids.filtered('image_found'))
-            rec.found_texts = len(rec.result_ids.filtered('text_found'))
+            rec.total_matched = len(rec.result_ids)
+            rec.total_images = sum(rec.result_ids.mapped('image_count'))
+            rec.total_texts = sum(rec.result_ids.mapped('text_count'))
+            rec.total_not_found = rec.total_isbns_scanned - len(rec.result_ids)
 
     def _parse_isbns(self):
         """Parse ISBNs from the uploaded CSV file."""
@@ -77,6 +81,28 @@ class ISBNLookupWizard(models.TransientModel):
 
         return unique_isbns
 
+    def _drive_api_call_with_retry(self, api_call, max_retries=3):
+        """Execute a Drive API call with retry logic for transient errors."""
+        for attempt in range(max_retries):
+            try:
+                return api_call.execute()
+            except Exception as e:
+                error_str = str(e)
+                if attempt < max_retries - 1 and (
+                    'token' in error_str.lower()
+                    or 'timeout' in error_str.lower()
+                    or 'connection' in error_str.lower()
+                    or '503' in error_str
+                    or '429' in error_str
+                ):
+                    wait_time = (attempt + 1) * 5  # 5s, 10s, 15s
+                    _logger.warning(f"Drive API call failed (attempt {attempt + 1}/{max_retries}), "
+                                    f"retrying in {wait_time}s: {e}")
+                    time.sleep(wait_time)
+                else:
+                    raise
+        return None
+
     def _get_all_files_from_folders(self, service, folder_ids):
         """Query each folder once and return all jpg/txt files as a flat list.
         
@@ -98,7 +124,7 @@ class ISBNLookupWizard(models.TransientModel):
 
             while True:
                 try:
-                    resp = service.files().list(
+                    request = service.files().list(
                         q=query,
                         fields="nextPageToken, files(id, name, mimeType, size)",
                         pageSize=1000,
@@ -106,10 +132,21 @@ class ISBNLookupWizard(models.TransientModel):
                         supportsAllDrives=True,
                         corpora='allDrives',
                         pageToken=page_token,
-                    ).execute()
+                    )
+                    resp = self._drive_api_call_with_retry(request)
+
+                    if not resp:
+                        _logger.error(f"Drive API returned empty response for folder {folder_id}")
+                        break
+
                 except Exception as e:
-                    _logger.error(f"Drive API error scanning folder {folder_id}: {e}")
-                    break
+                    _logger.error(f"Drive API error scanning folder {folder_id} "
+                                  f"(after retries): {e}")
+                    raise UserError(_(
+                        'Failed to scan Google Drive folder.\n'
+                        'Error: %s\n\n'
+                        'Please check the service account configuration and try again.'
+                    ) % str(e))
 
                 files = resp.get('files', [])
                 all_files.extend(files)
@@ -129,18 +166,28 @@ class ISBNLookupWizard(models.TransientModel):
         
         Builds a dict keyed by ISBN with lists of matching image/text files.
         A file matches if its name (without extension) starts with the ISBN.
+        Only returns ISBNs that have at least one match.
         """
-        isbn_set = set(isbns)
-        results = {isbn: {'images': [], 'texts': []} for isbn in isbns}
+        # Sort ISBNs by length descending so longer ISBNs match first
+        # (prevents ISBN-10 matching a file that belongs to an ISBN-13)
+        sorted_isbns = sorted(isbns, key=len, reverse=True)
+
+        results = {}
 
         for f in drive_files:
             fname = f['name']
             ext = fname.rsplit('.', 1)[-1].lower() if '.' in fname else ''
             name_without_ext = fname.rsplit('.', 1)[0] if '.' in fname else fname
 
-            # Check which ISBN this file belongs to
-            for isbn in isbn_set:
+            # Skip files with unexpected extensions
+            if ext not in ('jpg', 'jpeg', 'txt'):
+                continue
+
+            # Find the matching ISBN (longest match first)
+            for isbn in sorted_isbns:
                 if name_without_ext.startswith(isbn):
+                    if isbn not in results:
+                        results[isbn] = {'images': [], 'texts': []}
                     if ext in ('jpg', 'jpeg'):
                         results[isbn]['images'].append(f)
                     elif ext == 'txt':
@@ -189,14 +236,21 @@ class ISBNLookupWizard(models.TransientModel):
         # --- Match ISBNs to files locally ---
         matches = self._match_isbns_to_files(isbns, drive_files)
 
-        # --- Create result records ---
+        # --- Create result records (only for matches) ---
         ResultModel = self.env['gdrive.isbn.lookup.result']
         self.result_ids.unlink()
 
+        created = 0
         for isbn in isbns:
+            if isbn not in matches:
+                continue
+
             match = matches[isbn]
             image_files = match['images']
             text_files = match['texts']
+
+            if not image_files and not text_files:
+                continue
 
             ResultModel.create({
                 'wizard_id': self.id,
@@ -209,15 +263,18 @@ class ISBNLookupWizard(models.TransientModel):
                 'text_file_ids': ','.join(f['id'] for f in text_files),
                 'text_file_names': ', '.join(f['name'] for f in text_files),
                 'text_count': len(text_files),
-                'selected': bool(image_files) or bool(text_files),
+                'selected': True,
             })
+            created += 1
 
-        self.state = 'results'
+        self.write({
+            'state': 'results',
+            'total_isbns_scanned': len(isbns),
+        })
 
-        found_img = sum(1 for isbn in isbns if matches[isbn]['images'])
-        found_txt = sum(1 for isbn in isbns if matches[isbn]['texts'])
-        _logger.info(f"ISBN scan complete: {len(isbns)} ISBNs, "
-                     f"{found_img} with images, {found_txt} with texts")
+        _logger.info(f"ISBN scan complete: {len(isbns)} ISBNs scanned, "
+                     f"{created} with matches, "
+                     f"{len(isbns) - created} not found on Drive")
 
         return {
             'type': 'ir.actions.act_window',
@@ -263,18 +320,19 @@ class ISBNLookupWizard(models.TransientModel):
         for file_id in file_ids_to_download:
             try:
                 # Get file metadata
-                file_meta = service.files().get(
+                meta_request = service.files().get(
                     fileId=file_id,
                     fields="name, mimeType, size",
                     supportsAllDrives=True,
-                ).execute()
+                )
+                file_meta = self._drive_api_call_with_retry(meta_request)
 
                 file_name = file_meta['name']
                 mime_type = file_meta.get('mimeType', 'application/octet-stream')
 
                 # Download content
-                request = service.files().get_media(fileId=file_id)
-                file_content = request.execute()
+                dl_request = service.files().get_media(fileId=file_id)
+                file_content = self._drive_api_call_with_retry(dl_request)
 
                 if isinstance(file_content, str):
                     file_content = file_content.encode('utf-8')
@@ -318,10 +376,8 @@ class ISBNLookupWizard(models.TransientModel):
         }
 
     def action_select_all(self):
-        """Select all results that have files."""
-        self.result_ids.filtered(
-            lambda r: r.image_found or r.text_found
-        ).write({'selected': True})
+        """Select all results."""
+        self.result_ids.write({'selected': True})
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
@@ -349,7 +405,7 @@ class ISBNLookupResult(models.TransientModel):
 
     wizard_id = fields.Many2one('gdrive.isbn.lookup.wizard', ondelete='cascade')
     isbn = fields.Char('ISBN', readonly=True)
-    selected = fields.Boolean('Download', default=False)
+    selected = fields.Boolean('Download', default=True)
 
     # Image info
     image_found = fields.Boolean('Image', readonly=True)

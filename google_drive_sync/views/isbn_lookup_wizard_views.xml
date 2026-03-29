@@ -20,23 +20,25 @@
                                 <p>The wizard will scan all Google Drive folders marked for 
                                    "Product Images &amp; Descriptions" and look for .jpg and .txt 
                                    files whose name starts with the ISBN.</p>
+                                <p>Only ISBNs with matching files will be shown in the results.</p>
                             </div>
                         </group>
                     </group>
 
-                    <!-- Results state -->
-                    <group invisible="state != 'results'">
-                        <group>
-                            <field name="total_isbns"/>
-                            <field name="found_images"/>
-                            <field name="found_texts"/>
-                        </group>
-                    </group>
+                    <!-- Results state: summary -->
+                    <div class="alert alert-info" role="alert" invisible="state != 'results'">
+                        <strong>Scan Results: </strong>
+                        <field name="total_isbns_scanned" class="d-inline"/> ISBNs scanned — 
+                        <field name="total_matched" class="d-inline"/> with files found 
+                        (<field name="total_images" class="d-inline"/> images, 
+                        <field name="total_texts" class="d-inline"/> texts) — 
+                        <field name="total_not_found" class="d-inline"/> not found
+                    </div>
 
+                    <!-- Results tree -->
                     <field name="result_ids" invisible="state != 'results'"
                            nolabel="1">
-                        <tree editable="bottom" decoration-success="image_found or text_found"
-                              decoration-muted="not image_found and not text_found">
+                        <tree editable="bottom">
                             <field name="selected"/>
                             <field name="isbn"/>
                             <field name="image_found"/>
@@ -56,7 +58,7 @@
                     <footer>
                         <button string="Scan Google Drive" name="action_scan" type="object"
                                 class="btn-primary" invisible="state != 'upload'"/>
-                        <button string="Select All Found" name="action_select_all" type="object"
+                        <button string="Select All" name="action_select_all" type="object"
                                 class="btn-secondary" invisible="state != 'results'"/>
                         <button string="Deselect All" name="action_deselect_all" type="object"
                                 class="btn-secondary" invisible="state != 'results'"/>
