@@ -162,38 +162,54 @@ class ISBNLookupWizard(models.TransientModel):
         return all_files
 
     def _match_isbns_to_files(self, isbns, drive_files):
-        """Match ISBNs to Drive files locally.
+        """Match ISBNs to Drive files locally using set-based lookup.
         
-        Builds a dict keyed by ISBN with lists of matching image/text files.
-        A file matches if its name (without extension) starts with the ISBN.
-        Only returns ISBNs that have at least one match.
+        For each file, extracts the leading digits from the filename and checks
+        against the ISBN set. Tries ISBN-13 (first 13 digits) before ISBN-10
+        (first 10 digits) so longer matches take priority.
+        
+        This is O(n) where n = number of files, instead of O(n*m) with m = ISBNs.
         """
-        # Sort ISBNs by length descending so longer ISBNs match first
-        # (prevents ISBN-10 matching a file that belongs to an ISBN-13)
-        sorted_isbns = sorted(isbns, key=len, reverse=True)
-
+        isbn_set = set(isbns)
         results = {}
+        matched = 0
 
         for f in drive_files:
             fname = f['name']
             ext = fname.rsplit('.', 1)[-1].lower() if '.' in fname else ''
             name_without_ext = fname.rsplit('.', 1)[0] if '.' in fname else fname
 
-            # Skip files with unexpected extensions
             if ext not in ('jpg', 'jpeg', 'txt'):
                 continue
 
-            # Find the matching ISBN (longest match first)
-            for isbn in sorted_isbns:
-                if name_without_ext.startswith(isbn):
-                    if isbn not in results:
-                        results[isbn] = {'images': [], 'texts': []}
-                    if ext in ('jpg', 'jpeg'):
-                        results[isbn]['images'].append(f)
-                    elif ext == 'txt':
-                        results[isbn]['texts'].append(f)
-                    break  # A file belongs to one ISBN only
+            # Extract leading digits from filename
+            digits = ''
+            for ch in name_without_ext:
+                if ch.isdigit():
+                    digits += ch
+                else:
+                    break
 
+            if len(digits) < 10:
+                continue
+
+            # Try ISBN-13 first, then ISBN-10
+            matched_isbn = None
+            if len(digits) >= 13 and digits[:13] in isbn_set:
+                matched_isbn = digits[:13]
+            elif digits[:10] in isbn_set:
+                matched_isbn = digits[:10]
+
+            if matched_isbn:
+                if matched_isbn not in results:
+                    results[matched_isbn] = {'images': [], 'texts': []}
+                    matched += 1
+                if ext in ('jpg', 'jpeg'):
+                    results[matched_isbn]['images'].append(f)
+                elif ext == 'txt':
+                    results[matched_isbn]['texts'].append(f)
+
+        _logger.info(f"Matching complete: {matched} ISBNs matched across {len(drive_files)} files")
         return results
 
     def action_scan(self):
