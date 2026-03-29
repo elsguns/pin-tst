@@ -7,36 +7,57 @@
             <field name="model">gdrive.isbn.lookup.wizard</field>
             <field name="arch" type="xml">
                 <form string="ISBN Lookup">
-                    <!-- Start state -->
-                    <group invisible="state != 'start'">
-                        <div class="text-muted">
-                            <p>Click the button below to fetch all .jpg and .txt files 
-                               from folders marked for "Product Images &amp; Descriptions".</p>
-                        </div>
+                    <!-- Upload state -->
+                    <group invisible="state != 'upload'">
+                        <group>
+                            <field name="csv_file" filename="csv_filename"/>
+                            <field name="csv_filename" invisible="1"/>
+                        </group>
+                        <group>
+                            <div class="text-muted">
+                                <p>Upload a CSV file with ISBNs (one column with header).</p>
+                                <p>The wizard searches the file registry for matching 
+                                   .jpg and .txt files. Make sure you have run a sync first.</p>
+                            </div>
+                        </group>
                     </group>
 
-                    <!-- Files state: summary -->
-                    <div class="alert alert-info" role="alert" invisible="state != 'files'">
-                        <strong>Files found: </strong>
-                        <field name="total_files" class="d-inline"/>
+                    <!-- Results state: summary -->
+                    <div class="alert alert-info" role="alert" invisible="state != 'results'">
+                        <strong>Results: </strong>
+                        <field name="total_isbns_scanned" class="d-inline"/> ISBNs scanned —
+                        <field name="total_matched" class="d-inline"/> found
+                        (<field name="total_files" class="d-inline"/> files) —
+                        <field name="total_not_found" class="d-inline"/> not found —
+                        <field name="total_already_downloaded" class="d-inline"/> already downloaded
                     </div>
 
-                    <!-- Files tree -->
-                    <field name="file_ids" invisible="state != 'files'" nolabel="1">
-                        <tree>
-                            <field name="name"/>
-                            <field name="file_type"/>
-                            <field name="size"/>
-                            <field name="drive_file_id" optional="hide"/>
+                    <!-- Results tree -->
+                    <field name="result_ids" invisible="state != 'results'" nolabel="1">
+                        <tree editable="bottom"
+                              decoration-success="not already_downloaded"
+                              decoration-muted="already_downloaded">
+                            <field name="selected"/>
+                            <field name="isbn"/>
+                            <field name="file_count"/>
+                            <field name="file_names" optional="show"/>
+                            <field name="already_downloaded"/>
+                            <field name="registry_ids_str" column_invisible="1"/>
                         </tree>
                     </field>
 
                     <field name="state" invisible="1"/>
 
                     <footer>
-                        <button string="Fetch Files from Drive" name="action_fetch_files" type="object"
-                                class="btn-primary" invisible="state != 'start'"/>
-                        <button string="Close" class="btn-secondary" special="cancel"/>
+                        <button string="Search Registry" name="action_scan" type="object"
+                                class="btn-primary" invisible="state != 'upload'"/>
+                        <button string="Select All" name="action_select_all" type="object"
+                                class="btn-secondary" invisible="state != 'results'"/>
+                        <button string="Deselect All" name="action_deselect_all" type="object"
+                                class="btn-secondary" invisible="state != 'results'"/>
+                        <button string="Download Selected" name="action_download" type="object"
+                                class="btn-primary" invisible="state != 'results'"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
                     </footer>
                 </form>
             </field>

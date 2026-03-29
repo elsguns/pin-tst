@@ -3,7 +3,6 @@ import base64
 import csv
 import io
 import logging
-import time
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
@@ -15,129 +14,168 @@ class ISBNLookupWizard(models.TransientModel):
     _name = 'gdrive.isbn.lookup.wizard'
     _description = 'ISBN Lookup on Google Drive'
 
+    # Step 1: Upload
+    csv_file = fields.Binary('CSV File')
+    csv_filename = fields.Char('Filename')
+
+    # Step 2: Results
     state = fields.Selection([
-        ('start', 'Start'),
-        ('files', 'Drive Files'),
-    ], default='start', string='State')
+        ('upload', 'Upload'),
+        ('results', 'Results'),
+    ], default='upload', string='State')
 
-    file_ids = fields.One2many('gdrive.isbn.lookup.file', 'wizard_id', string='Files')
-    total_files = fields.Integer('Total Files', readonly=True)
+    result_ids = fields.One2many('gdrive.isbn.lookup.result', 'wizard_id', string='Results')
 
-    def _drive_api_call_with_retry(self, api_call, max_retries=3):
-        """Execute a Drive API call with retry logic for transient errors."""
-        for attempt in range(max_retries):
+    # Summary
+    total_isbns_scanned = fields.Integer('Total ISBNs Scanned', readonly=True)
+    total_matched = fields.Integer('ISBNs with Files', compute='_compute_stats', store=False)
+    total_files = fields.Integer('Total Files', compute='_compute_stats', store=False)
+    total_not_found = fields.Integer('ISBNs Not Found', compute='_compute_stats', store=False)
+    total_already_downloaded = fields.Integer('Already Downloaded', compute='_compute_stats', store=False)
+
+    @api.depends('result_ids', 'result_ids.file_count', 'total_isbns_scanned')
+    def _compute_stats(self):
+        for rec in self:
+            rec.total_matched = len(rec.result_ids)
+            rec.total_files = sum(rec.result_ids.mapped('file_count'))
+            rec.total_not_found = rec.total_isbns_scanned - len(rec.result_ids)
+            rec.total_already_downloaded = len(rec.result_ids.filtered('already_downloaded'))
+
+    def _parse_isbns(self):
+        """Parse ISBNs from the uploaded CSV file."""
+        raw = base64.b64decode(self.csv_file)
+        for encoding in ('utf-8-sig', 'utf-8', 'latin-1'):
             try:
-                return api_call.execute()
-            except Exception as e:
-                error_str = str(e).lower()
-                if attempt < max_retries - 1 and (
-                    'token' in error_str
-                    or 'timeout' in error_str
-                    or 'connection' in error_str
-                    or '503' in str(e)
-                    or '429' in str(e)
-                ):
-                    wait_time = (attempt + 1) * 5
-                    _logger.warning(f"Drive API call failed (attempt {attempt + 1}/{max_retries}), "
-                                    f"retrying in {wait_time}s: {e}")
-                    time.sleep(wait_time)
-                else:
-                    raise
-        return None
+                text = raw.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                continue
 
-    def action_fetch_files(self):
-        """Fetch all jpg/txt files from product content folders."""
+        first_line = text.split('\n')[0] if text else ''
+        delimiter = ';' if ';' in first_line else ','
+
+        reader = csv.reader(io.StringIO(text), delimiter=delimiter)
+        isbns = []
+        header_skipped = False
+        for row in reader:
+            if not row:
+                continue
+            val = row[0].strip().replace('-', '').replace(' ', '')
+            if not header_skipped:
+                header_skipped = True
+                if not val.isdigit():
+                    continue
+            if val and val.isdigit() and len(val) >= 10:
+                isbns.append(val)
+
+        # Deduplicate, preserve order
+        seen = set()
+        unique = []
+        for isbn in isbns:
+            if isbn not in seen:
+                seen.add(isbn)
+                unique.append(isbn)
+        return unique
+
+    def action_scan(self):
+        """Search the file registry for files matching the ISBNs."""
         self.ensure_one()
 
-        # --- Get product content folders ---
+        if not self.csv_file:
+            raise UserError(_('Please upload a CSV file.'))
+
+        isbns = self._parse_isbns()
+        if not isbns:
+            raise UserError(_('No valid ISBNs found in the CSV file.'))
+
+        _logger.info(f"Searching registry for {len(isbns)} ISBNs")
+
+        # Get product content folder IDs
         product_folders = self.env['gdrive.folder.selection'].search([
             ('selected', '=', True),
             ('download_product_content', '=', True),
         ])
         if not product_folders:
-            raise UserError(_('No folders are configured for Product Images & Descriptions. '
-                              'Please enable "Product Images & Descriptions" on at least one folder.'))
+            raise UserError(_('No folders are configured for Product Images & Descriptions.'))
 
         folder_ids = product_folders.mapped('folder_id')
-        _logger.info(f"Fetching files from {len(folder_ids)} product content folder(s)")
 
-        # --- Get Drive service ---
-        ICPSudo = self.env['ir.config_parameter'].sudo()
-        service_json = ICPSudo.get_param('gdrive.service_account_json', '')
-        if not service_json:
-            raise UserError(_('Google Drive service account not configured.'))
+        # Get all jpg/txt files from registry in these folders
+        Registry = self.env['gdrive.file.registry']
+        registry_files = Registry.search([
+            ('folder_id', 'in', folder_ids),
+            ('mime_type', 'in', ['image/jpeg', 'image/jpg', 'text/plain']),
+        ])
 
-        service = self.env['gdrive.file.registry']._get_drive_service(service_json)
+        _logger.info(f"Registry has {len(registry_files)} jpg/txt files in product content folders")
 
-        # --- Fetch all jpg/txt files ---
-        all_files = []
-        for folder_id in folder_ids:
-            query = (
-                f"'{folder_id}' in parents"
-                f" and mimeType != 'application/vnd.google-apps.folder'"
-                f" and (mimeType = 'image/jpeg' or mimeType = 'text/plain')"
-            )
-            page_token = None
-            folder_count = 0
+        # Build ISBN lookup: for each file, check if it starts with an ISBN
+        isbn_set = set(isbns)
+        # Sort by length descending so ISBN-13 matches before ISBN-10
+        sorted_isbns = sorted(isbn_set, key=len, reverse=True)
 
-            while True:
-                try:
-                    request = service.files().list(
-                        q=query,
-                        fields="nextPageToken, files(id, name, mimeType, size)",
-                        pageSize=1000,
-                        includeItemsFromAllDrives=True,
-                        supportsAllDrives=True,
-                        corpora='allDrives',
-                        pageToken=page_token,
-                    )
-                    resp = self._drive_api_call_with_retry(request)
+        # Group files by matched ISBN
+        isbn_matches = {}  # isbn -> list of registry records
 
-                    if not resp:
-                        _logger.error(f"Empty response for folder {folder_id}")
-                        break
+        for file_rec in registry_files:
+            fname = file_rec.name or ''
+            name_without_ext = fname.rsplit('.', 1)[0] if '.' in fname else fname
 
-                except Exception as e:
-                    _logger.error(f"Drive API error for folder {folder_id}: {e}")
-                    raise UserError(_('Failed to fetch files from Google Drive: %s') % str(e))
-
-                files = resp.get('files', [])
-                for f in files:
-                    f['folder_id'] = folder_id
-                all_files.extend(files)
-                folder_count += len(files)
-
-                page_token = resp.get('nextPageToken')
-                if not page_token:
+            # Extract leading digits
+            digits = ''
+            for ch in name_without_ext:
+                if ch.isdigit():
+                    digits += ch
+                else:
                     break
 
-                _logger.info(f"Folder {folder_id}: fetched {folder_count} files so far...")
+            if len(digits) < 10:
+                continue
 
-            _logger.info(f"Folder {folder_id}: {folder_count} jpg/txt files total")
+            # Try ISBN-13 first, then ISBN-10
+            matched_isbn = None
+            if len(digits) >= 13 and digits[:13] in isbn_set:
+                matched_isbn = digits[:13]
+            elif digits[:10] in isbn_set:
+                matched_isbn = digits[:10]
 
-        _logger.info(f"Total files fetched: {len(all_files)}")
+            if matched_isbn:
+                if matched_isbn not in isbn_matches:
+                    isbn_matches[matched_isbn] = []
+                isbn_matches[matched_isbn].append(file_rec)
 
-        # --- Store in transient model ---
-        self.file_ids.unlink()
-        FileModel = self.env['gdrive.isbn.lookup.file']
+        _logger.info(f"Matched {len(isbn_matches)} ISBNs to registry files")
 
-        for f in all_files:
-            ext = f['name'].rsplit('.', 1)[-1].lower() if '.' in f['name'] else ''
-            FileModel.create({
+        # Create result records (only for matches)
+        ResultModel = self.env['gdrive.isbn.lookup.result']
+        self.result_ids.unlink()
+
+        for isbn in isbns:
+            if isbn not in isbn_matches:
+                continue
+
+            files = isbn_matches[isbn]
+            registry_ids = [f.id for f in files]
+            file_names = ', '.join(f.name for f in files)
+            all_downloaded = all(f.is_downloaded for f in files)
+            any_to_download = any(not f.is_downloaded for f in files)
+
+            ResultModel.create({
                 'wizard_id': self.id,
-                'drive_file_id': f['id'],
-                'name': f['name'],
-                'mime_type': f.get('mimeType', ''),
-                'size': int(f.get('size', 0)),
-                'file_type': 'image' if ext in ('jpg', 'jpeg') else 'text',
+                'isbn': isbn,
+                'file_count': len(files),
+                'file_names': file_names,
+                'registry_ids_str': ','.join(str(rid) for rid in registry_ids),
+                'already_downloaded': all_downloaded,
+                'selected': any_to_download,
             })
 
         self.write({
-            'state': 'files',
-            'total_files': len(all_files),
+            'state': 'results',
+            'total_isbns_scanned': len(isbns),
         })
 
-        _logger.info(f"Stored {len(all_files)} file records")
+        _logger.info(f"ISBN scan complete: {len(isbns)} scanned, {len(isbn_matches)} matched")
 
         return {
             'type': 'ir.actions.act_window',
@@ -147,18 +185,110 @@ class ISBNLookupWizard(models.TransientModel):
             'target': 'new',
         }
 
+    def action_download(self):
+        """Download selected files via the registry's existing download mechanism."""
+        self.ensure_one()
 
-class ISBNLookupFile(models.TransientModel):
-    _name = 'gdrive.isbn.lookup.file'
-    _description = 'Drive File List'
-    _order = 'name'
+        selected = self.result_ids.filtered('selected')
+        if not selected:
+            raise UserError(_('No ISBNs selected for download.'))
+
+        # Collect all registry record IDs
+        registry_ids = []
+        for result in selected:
+            if result.registry_ids_str:
+                for rid in result.registry_ids_str.split(','):
+                    if rid.strip():
+                        registry_ids.append(int(rid.strip()))
+
+        if not registry_ids:
+            raise UserError(_('No files to download.'))
+
+        # Get registry records that aren't downloaded yet
+        Registry = self.env['gdrive.file.registry']
+        files_to_download = Registry.browse(registry_ids).filtered(lambda f: not f.is_downloaded)
+
+        if not files_to_download:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Nothing to Download'),
+                    'message': _('All selected files are already downloaded.'),
+                    'type': 'info',
+                    'sticky': False,
+                }
+            }
+
+        _logger.info(f"Starting download of {len(files_to_download)} files from registry")
+
+        # Use the registry's existing download method
+        downloaded = 0
+        failed = 0
+
+        for file_rec in files_to_download:
+            try:
+                file_rec.action_download_file()
+                downloaded += 1
+                _logger.info(f"Downloaded ({downloaded}/{len(files_to_download)}): {file_rec.name}")
+
+                if downloaded % 10 == 0:
+                    self.env.cr.commit()
+
+            except Exception as e:
+                failed += 1
+                _logger.error(f"Failed to download {file_rec.name}: {e}")
+
+        self.env.cr.commit()
+
+        _logger.info(f"ISBN download complete: {downloaded} downloaded, {failed} failed")
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('ISBN Download Complete'),
+                'message': _('Downloaded: %d files\nFailed: %d files') % (downloaded, failed),
+                'type': 'success' if failed == 0 else 'warning',
+                'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            }
+        }
+
+    def action_select_all(self):
+        """Select all results that have files to download."""
+        self.result_ids.filtered(
+            lambda r: not r.already_downloaded
+        ).write({'selected': True})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_deselect_all(self):
+        """Deselect all results."""
+        self.result_ids.write({'selected': False})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+
+class ISBNLookupResult(models.TransientModel):
+    _name = 'gdrive.isbn.lookup.result'
+    _description = 'ISBN Lookup Result'
+    _order = 'isbn'
 
     wizard_id = fields.Many2one('gdrive.isbn.lookup.wizard', ondelete='cascade')
-    drive_file_id = fields.Char('Drive File ID', readonly=True)
-    name = fields.Char('Filename', readonly=True)
-    mime_type = fields.Char('MIME Type', readonly=True)
-    size = fields.Integer('Size (bytes)', readonly=True)
-    file_type = fields.Selection([
-        ('image', 'Image'),
-        ('text', 'Text'),
-    ], string='Type', readonly=True)
+    isbn = fields.Char('ISBN', readonly=True)
+    selected = fields.Boolean('Download', default=True)
+    file_count = fields.Integer('# Files', readonly=True)
+    file_names = fields.Char('Files', readonly=True)
+    registry_ids_str = fields.Char('Registry IDs', readonly=True)
+    already_downloaded = fields.Boolean('Already Downloaded', readonly=True)
