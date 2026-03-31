@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="vendor_stock_info_assets"
-              inherit_id="website.assets_frontend"
-              name="Vendor Stock Info CSS">
-        <xpath expr="." position="inside">
-            <link rel="stylesheet"
-                  href="/vendor_stock_info/static/src/css/vendor_stock_info.css"/>
-        </xpath>
-    </template>
-
+    
     <record id="product_vendor_stock_info" model="ir.ui.view">
         <field name="name">Vendor Stock Info</field>
         <field name="type">qweb</field>
