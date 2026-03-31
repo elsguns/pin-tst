@@ -17,4 +17,7 @@ class ProductTemplate(models.Model):
             domain.append(
                 ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY)
             )
+            domain.append(
+                ('x_studio_lifecycle', '!=', '0')
+            )
         return domain
