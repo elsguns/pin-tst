@@ -1,3 +1,5 @@
+from markupsafe import Markup
+
 from odoo.http import request
 from werkzeug.exceptions import NotFound
 from odoo.addons.website_sale.controllers.main import WebsiteSale
@@ -27,12 +29,12 @@ class WebsiteSaleVendorStock(WebsiteSale):
 
         lifecycle = product.sudo().x_studio_lifecycle
         vendor = self._get_best_vendor(vendor_infos)
-        show_buy, message, msg_color = self._compute_buy_decision(
+        show_buy, message, css_class = self._compute_buy_decision(
             values['own_stock'], lifecycle, vendor,
         )
         values['show_buy_button'] = show_buy
         values['availability_msg'] = message
-        values['availability_msg_color'] = msg_color
+        values['availability_msg_class'] = css_class
         return values
 
     def _get_best_vendor(self, vendor_infos):
@@ -55,11 +57,16 @@ class WebsiteSaleVendorStock(WebsiteSale):
         return vendor_infos[0] if vendor_infos else None
 
     def _compute_buy_decision(self, own_stock, lifecycle, vendor):
-        """Returns (show_buy_button, message, color)."""
+        """Returns (show_buy_button, message, css_class)."""
         if own_stock > 0:
             if lifecycle == '4':
-                return True, 'Laatste exemplaren!', 'text-primary'
-            return True, '', ''
+                return True, 'Laatste exemplaren!', 'vsi-last-copies'
+            return (
+                True,
+                Markup('Vandaag besteld, overmorgen geleverd.'
+                       '<br/>Meteen af te halen in de winkel.'),
+                'vsi-in-stock',
+            )
 
         delay_str = ''
         eta_str = ''
@@ -74,22 +81,22 @@ class WebsiteSaleVendorStock(WebsiteSale):
             msg = 'Aangekondigd'
             if eta_str:
                 msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'text-success'
+            return False, msg, 'vsi-announced'
 
         if lifecycle == '2':
             msg = 'Leverbaar binnen ' + delay_str
-            return True, msg, 'text-success'
+            return True, msg, 'vsi-available'
 
         if lifecycle == '3':
             msg = 'In herdruk'
             if eta_str:
                 msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'text-success'
+            return False, msg, 'vsi-reprint'
 
         if lifecycle == '4':
-            return False, 'Uitverkocht', 'text-danger'
+            return False, 'Uitverkocht', 'vsi-sold-out'
 
         if lifecycle == '5':
-            return False, 'Uitgave geannuleerd', 'text-danger'
+            return False, 'Uitgave geannuleerd', 'vsi-cancelled'
 
         return True, '', ''

@@ -1,0 +1,33 @@
+/* vendor_stock_info – availability messages */
+
+.vsi-in-stock {
+    color: #198754;          /* Bootstrap success green */
+    font-weight: bold;
+}
+
+.vsi-last-copies {
+    color: #0d6efd;          /* Bootstrap primary blue */
+    font-weight: bold;
+}
+
+.vsi-announced {
+    color: #198754;
+}
+
+.vsi-available {
+    color: #198754;
+}
+
+.vsi-reprint {
+    color: #198754;
+}
+
+.vsi-sold-out {
+    color: #dc3545;          /* Bootstrap danger red */
+    font-weight: bold;
+}
+
+.vsi-cancelled {
+    color: #dc3545;
+    font-weight: bold;
+}
