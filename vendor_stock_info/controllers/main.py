@@ -59,7 +59,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
     def _compute_buy_decision(self, own_stock, lifecycle, vendor):
         """Returns (show_buy_button, message, css_class)."""
         if own_stock > 0:
-            if lifecycle == '4':
+            if lifecycle in ('4', '9'):
                 return True, 'Laatste exemplaren!', 'vsi-last-copies'
             return (
                 True,
@@ -95,7 +95,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
                 msg += '. Leverbaar vanaf ' + eta_str
             return False, msg, 'vsi-reprint'
 
-        if lifecycle == '4':
+        if lifecycle in ('4', '9'):
             return False, 'Uitverkocht', 'vsi-sold-out'
 
         if lifecycle == '5':
