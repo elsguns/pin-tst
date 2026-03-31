@@ -85,6 +85,8 @@ class WebsiteSaleVendorStock(WebsiteSale):
 
         if lifecycle == '2':
             msg = 'Leverbaar binnen ' + delay_str
+            if vendor and vendor.get('vendor_stock', 0) > 0:
+                msg = Markup(msg + '.<br/>Afhaling binnen 1 dag.')
             return True, msg, 'vsi-available'
 
         if lifecycle == '3':
