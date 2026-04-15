@@ -1,7 +1,7 @@
 import logging
 _logger = logging.getLogger(__name__)
 
-from odoo import models, api
+from odoo import models, fields, api
 
 HBL_VISIBLE_AVAILABILITY = ['A']
 HBL_WEBSITE_ID = 2
@@ -9,6 +9,12 @@ HBL_WEBSITE_ID = 2
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
+
+    delivery_message = fields.Char(compute='_compute_delivery_message')
+
+    def _compute_delivery_message(self):
+        for p in self:
+            p.delivery_message = 'hello'
 
     def _get_website_domain(self):
         domain = super()._get_website_domain()

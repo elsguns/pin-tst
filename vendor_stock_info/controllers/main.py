@@ -13,10 +13,12 @@ PINCEEL_VENDOR_ID = 4668
 class WebsiteSaleVendorStock(WebsiteSale):
 
     def _prepare_product_values(self, product, category, search, **kwargs):
-        if request.website.id == HBL_WEBSITE_ID:
-            if (product.x_studio_availability_hbl not in HBL_VISIBLE_AVAILABILITY
-                    or product.x_studio_lifecycle == '0'):
-                raise NotFound()
+        if request.website.id != HBL_WEBSITE_ID:
+            return super()._prepare_product_values(product, category, search, **kwargs)
+
+        if (product.x_studio_availability_hbl not in HBL_VISIBLE_AVAILABILITY
+                or product.x_studio_lifecycle == '0'):
+            raise NotFound()
 
         values = super()._prepare_product_values(product, category, search, **kwargs)
 
