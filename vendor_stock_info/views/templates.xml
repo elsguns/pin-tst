@@ -28,8 +28,8 @@
                         <span t-out="product.sudo().x_studio_availability_hbl"/> -
                         <span t-out="avail"/>
                     </p>
-                    <p t-if="availability_msg" class="mb-2" t-att-class="availability_msg_class">
-                        <t t-raw="availability_msg"/>
+                    <p t-if="product.availability_msg" class="mb-2" t-att-class="product.availability_msg_class">
+                        <t t-out="product.availability_msg"/>
                     </p>
                     <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
                         <thead>
@@ -61,7 +61,7 @@
             </xpath>
             <!-- Hide the entire add-to-cart form when buy button should be hidden -->
             <xpath expr="//form[@action='/shop/cart/update']" position="attributes">
-                <attribute name="t-if">show_buy_button</attribute>
+                <attribute name="t-if">product.show_buy_button</attribute>
             </xpath>
         </field>
     </record>

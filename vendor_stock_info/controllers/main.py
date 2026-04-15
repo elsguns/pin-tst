@@ -1,13 +1,9 @@
-from markupsafe import Markup
-
 from odoo.http import request
 from werkzeug.exceptions import NotFound
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.vendor_stock_info.models.product_template import (
     HBL_VISIBLE_AVAILABILITY, HBL_WEBSITE_ID,
 )
-
-PINCEEL_VENDOR_ID = 4668
 
 
 class WebsiteSaleVendorStock(WebsiteSale):
@@ -29,79 +25,4 @@ class WebsiteSaleVendorStock(WebsiteSale):
         ])
         values['vendor_infos'] = vendor_infos
         values['own_stock'] = product.sudo().qty_available
-
-        lifecycle = product.sudo().x_studio_lifecycle
-        vendor = self._get_best_vendor(vendor_infos)
-        show_buy, message, css_class = self._compute_buy_decision(
-            values['own_stock'], lifecycle, vendor,
-        )
-        values['show_buy_button'] = show_buy
-        values['availability_msg'] = message
-        values['availability_msg_class'] = css_class
         return values
-
-    def _get_best_vendor(self, vendor_infos):
-        """Get Pinceel vendor if it has stock, otherwise best alternative."""
-        for vi in vendor_infos:
-            if vi['partner_id'][0] == PINCEEL_VENDOR_ID:
-                if vi['vendor_stock'] > 0:
-                    return vi
-                break
-        candidates = [
-            vi for vi in vendor_infos
-            if vi['partner_id'][0] != PINCEEL_VENDOR_ID and vi['vendor_stock'] > 0
-        ]
-        if candidates:
-            return min(candidates, key=lambda v: v['delay'])
-        # No vendor with stock — return Pinceel anyway for ETA
-        for vi in vendor_infos:
-            if vi['partner_id'][0] == PINCEEL_VENDOR_ID:
-                return vi
-        return vendor_infos[0] if vendor_infos else None
-
-    def _compute_buy_decision(self, own_stock, lifecycle, vendor):
-        """Returns (show_buy_button, message, css_class)."""
-        if own_stock > 0:
-            if lifecycle in ('4', '9'):
-                return True, 'Laatste exemplaren!', 'vsi-last-copies'
-            return (
-                True,
-                Markup('Vandaag besteld, overmorgen geleverd.'
-                       '<br/>Meteen af te halen in de winkel.'),
-                'vsi-in-stock',
-            )
-
-        delay_str = ''
-        eta_str = ''
-        if vendor:
-            delay = vendor.get('delay', 0)
-            delay_str = '%s dag%s' % (delay, 'en' if delay != 1 else '')
-            eta = vendor.get('x_studio_eta')
-            if eta:
-                eta_str = eta.strftime('%d/%m/%Y') if hasattr(eta, 'strftime') else str(eta)
-
-        if lifecycle == '1':
-            msg = 'Aangekondigd'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'vsi-announced'
-
-        if lifecycle == '2':
-            msg = 'Leverbaar binnen ' + delay_str
-            if vendor and vendor.get('vendor_stock', 0) > 0:
-                msg = Markup(msg + '.<br/>Afhaling binnen 1 dag.')
-            return True, msg, 'vsi-available'
-
-        if lifecycle == '3':
-            msg = 'In herdruk'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'vsi-reprint'
-
-        if lifecycle in ('4', '9'):
-            return False, 'Uitverkocht', 'vsi-sold-out'
-
-        if lifecycle == '5':
-            return False, 'Uitgave geannuleerd', 'vsi-cancelled'
-
-        return True, '', ''
