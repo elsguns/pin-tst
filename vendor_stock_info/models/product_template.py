@@ -1,7 +1,6 @@
 import logging
 _logger = logging.getLogger(__name__)
 
-from markupsafe import Markup
 from odoo import models, fields, api
 
 HBL_VISIBLE_AVAILABILITY = ['A']
@@ -13,8 +12,7 @@ class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
     show_buy_button = fields.Boolean(compute='_compute_delivery_info')
-    availability_msg = fields.Html(compute='_compute_delivery_info')
-    availability_msg_class = fields.Char(compute='_compute_delivery_info')
+    avail_messages = fields.Json(compute='_compute_delivery_info')
 
     @api.depends_context('website_id')
     @api.depends('x_studio_lifecycle', 'qty_available', 'seller_ids')
@@ -23,8 +21,7 @@ class ProductTemplate(models.Model):
         for p in self:
             if website.id != HBL_WEBSITE_ID:
                 p.show_buy_button = True
-                p.availability_msg = ''
-                p.availability_msg_class = ''
+                p.avail_messages = []
                 continue
             own_stock = p.sudo().qty_available
             vendor_infos = p.sudo().seller_ids.filtered(
@@ -33,12 +30,11 @@ class ProductTemplate(models.Model):
                 'partner_id', 'vendor_stock', 'delay', 'x_studio_eta',
             ])
             vendor = self._pick_best_vendor(vendor_infos)
-            show, msg, cls = self._buy_decision(
+            show, messages = self._buy_decision(
                 own_stock, p.sudo().x_studio_lifecycle, vendor,
             )
             p.show_buy_button = show
-            p.availability_msg = msg
-            p.availability_msg_class = cls
+            p.avail_messages = messages
 
     @api.model
     def _pick_best_vendor(self, vendor_infos):
@@ -61,16 +57,14 @@ class ProductTemplate(models.Model):
 
     @api.model
     def _buy_decision(self, own_stock, lifecycle, vendor):
-        """Returns (show_buy_button, message, css_class)."""
+        """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...])."""
         if own_stock > 0:
             if lifecycle in ('4', '9'):
-                return True, 'Laatste exemplaren!', 'vsi-last-copies'
-            return (
-                True,
-                Markup('Vandaag besteld, overmorgen geleverd.'
-                       '<br/>Meteen af te halen in de winkel.'),
-                'vsi-in-stock',
-            )
+                return True, [{'msg': 'Laatste exemplaren!', 'class': 'vsi-last-copies'}]
+            return True, [
+                {'msg': 'Vandaag besteld, overmorgen geleverd.', 'class': 'vsi-in-stock'},
+                {'msg': 'Meteen af te halen in de winkel.', 'class': 'vsi-in-stock'},
+            ]
 
         delay_str = ''
         eta_str = ''
@@ -85,27 +79,27 @@ class ProductTemplate(models.Model):
             msg = 'Aangekondigd'
             if eta_str:
                 msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'vsi-announced'
+            return False, [{'msg': msg, 'class': 'vsi-announced'}]
 
         if lifecycle == '2':
-            msg = 'Leverbaar binnen ' + delay_str
+            messages = [{'msg': 'Leverbaar binnen ' + delay_str, 'class': 'vsi-available'}]
             if vendor and vendor.get('vendor_stock', 0) > 0:
-                msg = Markup(msg + '.<br/>Afhaling binnen 1 dag.')
-            return True, msg, 'vsi-available'
+                messages.append({'msg': 'Afhaling binnen 1 dag.', 'class': 'vsi-available'})
+            return True, messages
 
         if lifecycle == '3':
             msg = 'In herdruk'
             if eta_str:
                 msg += '. Leverbaar vanaf ' + eta_str
-            return False, msg, 'vsi-reprint'
+            return False, [{'msg': msg, 'class': 'vsi-reprint'}]
 
         if lifecycle in ('4', '9'):
-            return False, 'Uitverkocht', 'vsi-sold-out'
+            return False, [{'msg': 'Uitverkocht', 'class': 'vsi-sold-out'}]
 
         if lifecycle == '5':
-            return False, 'Uitgave geannuleerd', 'vsi-cancelled'
+            return False, [{'msg': 'Uitgave geannuleerd', 'class': 'vsi-cancelled'}]
 
-        return True, '', ''
+        return True, []
 
     def _get_website_domain(self):
         domain = super()._get_website_domain()

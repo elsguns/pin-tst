@@ -28,9 +28,9 @@
                         <span t-out="product.sudo().x_studio_availability_hbl"/> -
                         <span t-out="avail"/>
                     </p>
-                    <p t-if="product.availability_msg" class="mb-2" t-att-class="product.availability_msg_class">
-                        <t t-out="product.availability_msg"/>
-                    </p>
+                    <t t-foreach="product.avail_messages or []" t-as="m">
+                        <p class="mb-2" t-att-class="m['class']" t-out="m['msg']"/>
+                    </t>
                     <table t-if="vendor_infos" class="table table-sm table-striped mb-0">
                         <thead>
                             <tr>
