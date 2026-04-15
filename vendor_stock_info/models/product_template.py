@@ -70,7 +70,7 @@ class ProductTemplate(models.Model):
         eta_str = ''
         if vendor:
             delay = vendor.get('delay', 0)
-            delay_str = '%s dag%s' % (delay, 'en' if delay != 1 else '')
+            delay_str = '%d à %d dagen' % (delay + 1, delay + 2)
             eta = vendor.get('x_studio_eta')
             if eta:
                 eta_str = eta.strftime('%d/%m/%Y') if hasattr(eta, 'strftime') else str(eta)
@@ -82,9 +82,9 @@ class ProductTemplate(models.Model):
             return False, [{'msg': msg, 'class': 'vsi-announced'}]
 
         if lifecycle == '2':
-            messages = [{'msg': 'Leverbaar binnen ' + delay_str, 'class': 'vsi-available'}]
+            messages = [{'msg': 'Geleverd binnen ' + delay_str, 'class': 'vsi-available'}]
             if vendor and vendor.get('vendor_stock', 0) > 0:
-                messages.append({'msg': 'Afhaling binnen 1 dag.', 'class': 'vsi-available'})
+                messages.append({'msg': 'Morgen afhalen in de winkel', 'class': 'vsi-available'})
             return True, messages
 
         if lifecycle == '3':
