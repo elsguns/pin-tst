@@ -25,7 +25,7 @@ action = env['gdrive.file.registry'].action_purge_registry()
             <field name="name">gdrive.file.registry.tree</field>
             <field name="model">gdrive.file.registry</field>
             <field name="arch" type="xml">
-                <tree create="false" decoration-success="is_downloaded" decoration-info="not is_downloaded">
+                <tree decoration-success="is_downloaded" decoration-info="not is_downloaded">
                     <header>
                         <button name="%(action_scan_google_drive)d" 
                             type="action" 
