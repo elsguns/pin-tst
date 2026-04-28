@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="base.ir_cron_view_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='priority']" position="before">
-                <field name="is_running" string="Running" widget="boolean_toggle"/>
+                <field name="is_running" string="Running"/>
             </xpath>
         </field>
     </record>
