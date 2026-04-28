@@ -10,4 +10,17 @@
             </xpath>
         </field>
     </record>
+
+    <record id="ir_cron_view_search_inherit_running" model="ir.ui.view">
+        <field name="name">ir.cron.view.search.inherit.running</field>
+        <field name="model">ir.cron</field>
+        <field name="inherit_id" ref="base.ir_cron_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='all']" position="before">
+                <filter string="Running" name="is_running" domain="[('is_running', '=', True)]"/>
+                <filter string="Not Running" name="is_not_running" domain="[('is_running', '=', False)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
