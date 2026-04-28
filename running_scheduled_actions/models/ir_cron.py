@@ -38,25 +38,3 @@ class IrCron(models.Model):
         running_ids = all_crons.filtered('is_running').ids
         match_running = (operator == '=' and bool(value)) or (operator == '!=' and not bool(value))
         return [('id', 'in' if match_running else 'not in', running_ids)]
-
-    @api.model
-    def web_search_read(self, domain, specification, offset=0, limit=None, order=None, count_limit=None):
-        # Non-stored field can't be sorted via SQL — handle in Python when
-        # the user clicks the Running column header.
-        if order and order.split(',')[0].strip().split()[0] == 'is_running':
-            desc = 'desc' in order.split(',')[0].lower()
-            records = self.search(domain or [])
-            records._compute_is_running()
-            sorted_ids = records.sorted('is_running', reverse=desc).ids
-            paginated_ids = sorted_ids[offset:(offset + limit) if limit else None]
-            result = super().web_search_read(
-                [('id', 'in', paginated_ids)], specification,
-                offset=0, limit=None, order=None, count_limit=count_limit,
-            )
-            id_to_record = {r['id']: r for r in result['records']}
-            result['records'] = [id_to_record[i] for i in paginated_ids if i in id_to_record]
-            result['length'] = len(records)
-            return result
-        return super().web_search_read(
-            domain, specification, offset=offset, limit=limit, order=order, count_limit=count_limit,
-        )
