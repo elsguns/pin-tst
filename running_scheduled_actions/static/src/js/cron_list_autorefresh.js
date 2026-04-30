@@ -53,7 +53,7 @@ patch(FormController.prototype, {
             if (!root || !root.resId) {
                 return true; // new/unsaved record, nothing to reload
             }
-            return !!root.isDirty;
+            return !!root.dirty;
         });
     },
 });
