@@ -5,7 +5,7 @@ import { FormController } from "@web/views/form/form_controller";
 import { patch } from "@web/core/utils/patch";
 import { onMounted, onWillUnmount } from "@odoo/owl";
 
-const REFRESH_INTERVAL_MS = 3000;
+const REFRESH_INTERVAL_MS = 1000;
 
 function startCronAutoRefresh(component, shouldSkip) {
     let intervalId = null;
