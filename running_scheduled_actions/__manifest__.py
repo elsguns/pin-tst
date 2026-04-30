@@ -5,5 +5,10 @@
     'summary': 'Adds a Running column to the scheduled actions tree view',
     'depends': ['base'],
     'data': ['views/ir_cron_views.xml'],
+    'assets': {
+        'web.assets_backend': [
+            'running_scheduled_actions/static/src/js/cron_list_autorefresh.js',
+        ],
+    },
     'license': 'LGPL-3',
 }
