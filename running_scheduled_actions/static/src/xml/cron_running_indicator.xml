@@ -2,11 +2,12 @@
 <templates xml:space="preserve">
 
     <t t-name="running_scheduled_actions.CronRunningIndicator">
-        <span class="o_cron_running_indicator" style="display:inline-block;width:16px;height:16px;vertical-align:middle;">
+        <span class="o_cron_running_indicator" style="display:inline-block;width:20px;height:20px;vertical-align:middle;line-height:0;">
             <img t-if="isRunning"
                  src="/running_scheduled_actions/static/src/img/running.gif"
                  alt="Running"
-                 style="width:16px;height:16px;display:block;"/>
+                 style="width:20px;height:20px;display:block;"/>
+            <span t-else="" style="display:block;width:8px;height:8px;margin:6px;border-radius:50%;background-color:#d0d0d0;"/>
         </span>
     </t>
 
