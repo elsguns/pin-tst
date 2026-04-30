@@ -1,5 +1,6 @@
 {
     'name': 'Running Scheduled Actions',
+    'author': 'Bart Venken',
     'version': '17.0.1.0.0',
     'category': 'Technical',
     'summary': 'Adds a Running column to the scheduled actions tree view',
