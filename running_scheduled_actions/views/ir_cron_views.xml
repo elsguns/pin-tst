@@ -23,7 +23,7 @@
                 <attribute name="invisible">state != 'code' or is_running</attribute>
             </xpath>
             <xpath expr="//button[@name='method_direct_trigger']" position="after">
-                <div class="btn btn-secondary disabled"
+                <div class="btn btn-warning disabled"
                      role="button"
                      aria-disabled="true"
                      invisible="state != 'code' or not is_running">Running ...</div>
