@@ -17,8 +17,25 @@ async function refreshIsRunning(orm, records) {
     const data = await orm.silent.read("ir.cron", ids, ["is_running"]);
     const byId = Object.fromEntries(data.map((d) => [d.id, d.is_running]));
     for (const rec of records) {
-        if (rec.resId in byId && rec.data && rec.data.is_running !== byId[rec.resId]) {
-            rec.data.is_running = byId[rec.resId];
+        const newValue = byId[rec.resId];
+        if (newValue === undefined || !rec.data) {
+            continue;
+        }
+        if (rec.data.is_running === newValue) {
+            continue;
+        }
+        rec.data.is_running = newValue;
+        // Propagate to canonical store + reactive eval contexts so that
+        // modifier expressions (e.g. invisible="... or is_running") on
+        // form views and row decorations re-evaluate.
+        if (rec._values) {
+            rec._values.is_running = newValue;
+        }
+        if (rec.evalContext) {
+            rec.evalContext.is_running = newValue;
+        }
+        if (rec.evalContextWithVirtualIds) {
+            rec.evalContextWithVirtualIds.is_running = newValue;
         }
     }
 }
