@@ -8,6 +8,8 @@
     'assets': {
         'web.assets_backend': [
             'running_scheduled_actions/static/src/js/cron_list_autorefresh.js',
+            'running_scheduled_actions/static/src/js/cron_running_indicator.js',
+            'running_scheduled_actions/static/src/xml/cron_running_indicator.xml',
         ],
     },
     'license': 'LGPL-3',
