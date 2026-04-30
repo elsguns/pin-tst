@@ -8,9 +8,6 @@
             <xpath expr="//field[@name='priority']" position="before">
                 <field name="is_running" string="Running"/>
             </xpath>
-            <tree position="attributes">
-                <attribute name="decoration-info">is_running</attribute>
-            </tree>
         </field>
     </record>
 
