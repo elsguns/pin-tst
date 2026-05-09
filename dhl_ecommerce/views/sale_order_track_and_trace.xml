@@ -1,0 +1,16 @@
+<odoo>
+    <data>
+        <record id="view_order_form_inherit_dhl_track_trace" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.dhl.track.trace</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='other_information']" position="inside">
+                    <group>
+                        <field name="dhl_track_trace_number" string="DHL Track and Trace Number"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

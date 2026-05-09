@@ -1,0 +1,14 @@
+<odoo>
+  <data>
+    <record id="view_picking_form_inherit_dhl_ecommerce" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.dhl_ecommerce</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='extra']//group[@name='other_infos']" position="inside">
+                <field name="dhl_track_trace_number" string="DHL Track and Trace" readonly="1" invisible="0"/>
+            </xpath>
+        </field>
+    </record>
+  </data>
+</odoo>
