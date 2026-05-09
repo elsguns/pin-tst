@@ -8,26 +8,19 @@
       <field name="priority" eval="15"/>
       <field name="inherit_id" ref="base.res_config_settings_view_form"/>
       <field name="arch" type="xml">
-        <xpath expr="//div[hasclass('settings')]" position="inside">
-          <div class="app_settings_block"
-               data-string="DHL eCommerce"
-               string="DHL eCommerce"
-               data-key="dhl_ecommerce">
-            <h2>DHL eCommerce</h2>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 o_setting_box">
-                <div class="o_setting_left_pane"/>
-                <div class="o_setting_right_pane">
-                  <div>
-                    <group>
-                      <field name="webhook_url" string="Webhook URL"/>
-                      <field name="trigger_type" string="Send Webhook When"/>
-                    </group>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <xpath expr="//form" position="inside">
+          <app data-string="DHL eCommerce" string="DHL eCommerce" name="dhl_ecommerce">
+            <block title="DHL eCommerce" name="dhl_ecommerce_settings_block">
+              <setting id="dhl_ecommerce_webhook_url" string="Webhook URL"
+                       help="URL to which DHL eCommerce shipment data will be POSTed.">
+                <field name="webhook_url"/>
+              </setting>
+              <setting id="dhl_ecommerce_trigger_type" string="Send Webhook When"
+                       help="Determine when the webhook should be triggered.">
+                <field name="trigger_type"/>
+              </setting>
+            </block>
+          </app>
         </xpath>
       </field>
     </record>
