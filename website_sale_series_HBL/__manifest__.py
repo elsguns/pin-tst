@@ -1,9 +1,9 @@
 {
     'name': 'Website Sale Series (HBL)',
-    'version': '17.0.1.0.0',
+    'version': '17.0.2.0.0',
     'category': 'Website/Website',
-    'summary': 'Browse page for x_series records at /shop/reeksen with alphabetical pagination',
-    'depends': ['website_sale'],
+    'summary': 'Browse pages for x_series at /shop/reeksen (alphabet pagination) and /shop/reeks/<slug> (series detail)',
+    'depends': ['website_sale', 'vendor_stock_info'],
     'data': [
         'views/templates.xml',
     ],

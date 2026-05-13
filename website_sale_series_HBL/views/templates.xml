@@ -23,7 +23,9 @@
                         <t t-if="series_list">
                             <t t-foreach="series_list" t-as="series">
                                 <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2">
-                                    <span t-esc="series.x_name"/>
+                                    <a t-att-href="series['url']"
+                                       class="text-decoration-none"
+                                       t-esc="series['name']"/>
                                 </div>
                             </t>
                         </t>
@@ -33,6 +35,47 @@
                             </div>
                         </t>
                     </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="series_detail" name="Reeks Detail">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <div class="container py-4">
+
+                    <nav class="mb-3" aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="/shop/reeksen">Reeksen</a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page"
+                                t-esc="series.x_name"/>
+                        </ol>
+                    </nav>
+
+                    <h1 class="mb-4" t-esc="series.x_name"/>
+
+                    <t t-if="products">
+                        <ul class="list-unstyled">
+                            <t t-foreach="products" t-as="product">
+                                <li class="mb-1">
+                                    <a t-att-href="product.website_url"
+                                       class="text-decoration-none"
+                                       t-esc="product.name"/>
+                                </li>
+                            </t>
+                        </ul>
+
+                        <div class="d-flex justify-content-center pt-3 pb-3">
+                            <t t-call="website.pager"/>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">Geen titels in deze reeks.</p>
+                    </t>
+
                 </div>
             </div>
         </t>
