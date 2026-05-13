@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="series_index" name="Reeksen Index">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <div class="container py-4">
+                    <h1 class="mb-4">Reeksen</h1>
+
+                    <nav class="mb-4 series-alphabet-nav d-flex flex-wrap">
+                        <t t-foreach="nav" t-as="n">
+                            <a t-att-href="n['url']"
+                               t-att-class="'btn btn-sm me-1 mb-1 ' + ('btn-primary' if n['active'] else 'btn-outline-secondary')"
+                               t-esc="n['label']"/>
+                        </t>
+                    </nav>
+
+                    <h2 class="h5 mb-3 section-title">
+                        <span t-esc="current_label"/>
+                    </h2>
+
+                    <div class="row">
+                        <t t-if="series_list">
+                            <t t-foreach="series_list" t-as="series">
+                                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-2">
+                                    <span t-esc="series.x_name"/>
+                                </div>
+                            </t>
+                        </t>
+                        <t t-else="">
+                            <div class="col-12">
+                                <p class="text-muted">Geen reeksen onder deze letter.</p>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
