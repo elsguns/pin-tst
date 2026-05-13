@@ -59,6 +59,9 @@ class HBLSeriesController(http.Controller):
         type='http', auth='public', website=True, sitemap=False,
     )
     def series_index(self, letter=None, **kw):
+        if request.website.id != HBL_WEBSITE_ID:
+            raise NotFound()
+
         if letter is None:
             current = None
         else:
@@ -114,6 +117,9 @@ class HBLSeriesController(http.Controller):
         type='http', auth='public', website=True, sitemap=False,
     )
     def series_detail(self, series_slug, page=1, **kw):
+        if request.website.id != HBL_WEBSITE_ID:
+            raise NotFound()
+
         series = self._find_series_by_slug(series_slug)
         if not series:
             raise NotFound()
@@ -125,11 +131,8 @@ class HBLSeriesController(http.Controller):
             ('sale_ok', '=', True),
             ('website_published', '=', True),
             ('website_id', 'in', (False, website.id)),
+            ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY),
         ]
-        if website.id == HBL_WEBSITE_ID:
-            domain.append(
-                ('x_studio_availability_hbl', 'in', HBL_VISIBLE_AVAILABILITY)
-            )
 
         ProductTemplate = request.env['product.template']
         total = ProductTemplate.search_count(domain)
