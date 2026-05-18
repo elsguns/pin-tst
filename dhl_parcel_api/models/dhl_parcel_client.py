@@ -34,7 +34,7 @@ class DhlParcelClient(models.AbstractModel):
         if not (user_id and key and account_id):
             raise UserError(_(
                 "DHL Parcel API credentials are not configured. "
-                "Go to Settings > Inventory > DHL Parcel API and fill in "
+                "Go to Settings > DHL Parcel API (left sidebar) and fill in "
                 "User ID, API Key and Account ID."
             ))
         return user_id, key, account_id
