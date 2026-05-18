@@ -5,15 +5,30 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
-def _split_street(street):
-    """Naive split of Odoo's combined street field into (street, number).
-    Belgian convention: '<street> <number>[<letter>]'."""
-    if not street:
-        return "", ""
-    match = re.search(r"^(.*?)\s+(\d+\w*)\s*$", street.strip())
-    if match:
-        return match.group(1).strip(), match.group(2).strip()
-    return street.strip(), ""
+def _extract_address(partner):
+    """Best-effort extraction of (street, number, addition) from an Odoo partner.
+
+    Handles three layouts:
+      - BE / Pinceel convention: street name in `street`, house number
+        (optionally followed by 'bus N' etc.) in `street2`.
+      - Default Odoo: street + number combined in `street`.
+      - Mixed: number in `street`, addition (bus / apt) in `street2`.
+    """
+    street = (partner.street or "").strip()
+    street2 = (partner.street2 or "").strip()
+
+    # Pattern A: street2 starts with digits → split into number + addition
+    if street2 and re.match(r"^\d", street2):
+        m = re.match(r"^(\d+)\s*(.*)$", street2)
+        return street, m.group(1), m.group(2).strip()
+
+    # Pattern B: trailing number embedded in street; street2 is the addition
+    m = re.search(r"^(.*?)\s+(\d+\w*)\s*$", street)
+    if m:
+        return m.group(1).strip(), m.group(2), street2
+
+    # Pattern C: no number found — pass through whatever we have
+    return street, "", street2
 
 
 def _split_name(name):
@@ -89,7 +104,7 @@ class DhlShipmentWizard(models.TransientModel):
             raise UserError(_(
                 "Customer address is incomplete (street / zip / city required)."
             ))
-        street, number = _split_street(p.street)
+        street, number, addition = _extract_address(p)
         first_name, last_name = _split_name(p.name)
         return {
             "name": {
@@ -104,7 +119,7 @@ class DhlShipmentWizard(models.TransientModel):
                 "city": p.city,
                 "street": street,
                 "number": number,
-                "addition": "",
+                "addition": addition,
                 "isBusiness": p.is_company,
             },
             "email": p.email or "",
