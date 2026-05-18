@@ -197,7 +197,9 @@ class DhlShipmentWizard(models.TransientModel):
         client = self.env["dhl.parcel.client"]
         _user_id, _key, account_id = client._get_credentials()
 
-        shipment_id = client.new_shipment_uuid()
+        # Re-use a previously stored shipment_id if the SO already had one
+        # (idempotent retry); otherwise generate a fresh UUID.
+        shipment_id = so.dhl_parcel_shipment_id or client.new_shipment_uuid()
         payload = self._build_payload(shipment_id, account_id)
 
         token, response = client.create_shipment(payload)
