@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="dhl_shipment_wizard_form" model="ir.ui.view">
+    <field name="name">dhl.shipment.wizard.form</field>
+    <field name="model">dhl.shipment.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Create DHL Parcel shipment">
+        <sheet>
+          <group>
+            <field name="sale_order_id" readonly="1"/>
+            <field name="partner_id" readonly="1"/>
+            <field name="partner_is_company" invisible="1"/>
+          </group>
+          <group string="Parcel">
+            <field name="parcel_type_consumer"
+                   invisible="partner_is_company"
+                   required="not partner_is_company"/>
+            <field name="parcel_type_business"
+                   invisible="not partner_is_company"
+                   required="partner_is_company"/>
+            <field name="weight"/>
+            <field name="quantity"/>
+          </group>
+        </sheet>
+        <footer>
+          <button name="action_create_shipment"
+                  type="object"
+                  string="Create shipment"
+                  class="btn-primary"/>
+          <button string="Cancel" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+</odoo>
