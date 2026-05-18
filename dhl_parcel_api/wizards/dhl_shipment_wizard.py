@@ -51,7 +51,9 @@ class DhlShipmentWizard(models.TransientModel):
     )
     parcel_type_business = fields.Selection(
         [
+            ("XSMALL", "XSmall — mailbox parcel"),
             ("SMALL", "Small — regular parcel"),
+            ("ENVELOPE", "Envelope"),
             ("PALLET", "Pallet"),
         ],
         string="Parcel type",
