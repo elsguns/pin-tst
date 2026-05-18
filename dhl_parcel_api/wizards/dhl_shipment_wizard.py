@@ -201,7 +201,7 @@ class DhlShipmentWizard(models.TransientModel):
                 "DHL shipment created (tracker: %(tracker)s), but the label PDF "
                 "could not be fetched: %(error)s"
             ) % {"tracker": tracker or "—", "error": exc})
-            return {"type": "ir.actions.act_window_close"}
+            return {"type": "ir.actions.client", "tag": "soft_reload"}
 
         attachment = self.env["ir.attachment"].create({
             "name": "DHL-%s.pdf" % (tracker or shipment_id[:8]),
