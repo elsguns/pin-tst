@@ -12,7 +12,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
         if request.website.id != HBL_WEBSITE_ID:
             return super()._prepare_product_values(product, category, search, **kwargs)
 
-        if (product.x_studio_availability_hbl not in HBL_VISIBLE_AVAILABILITY
+        if (product.x_avail_hbl not in HBL_VISIBLE_AVAILABILITY
                 or product.x_studio_lifecycle == '0'):
             raise NotFound()
 
