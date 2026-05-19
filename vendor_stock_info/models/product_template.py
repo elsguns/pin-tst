@@ -29,9 +29,10 @@ class ProductTemplate(models.Model):
             ).sorted('sequence').read([
                 'partner_id', 'vendor_stock', 'delay', 'x_studio_eta',
             ])
+            total_stock = own_stock + sum(vi['vendor_stock'] for vi in vendor_infos)
             vendor = self._pick_best_vendor(vendor_infos)
             show, messages = self._buy_decision(
-                own_stock, p.sudo().x_studio_lifecycle, vendor,
+                total_stock, own_stock, p.sudo().x_studio_lifecycle, vendor,
             )
             p.show_buy_button = show
             p.avail_messages = messages
@@ -56,14 +57,18 @@ class ProductTemplate(models.Model):
         return vendor_infos[0] if vendor_infos else None
 
     @api.model
-    def _buy_decision(self, own_stock, lifecycle, vendor):
+    def _buy_decision(self, total_stock, own_stock, lifecycle, vendor):
         """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...])."""
-        if own_stock > 0:
+        if total_stock > 0:
             if lifecycle in ('4', '9'):
                 return True, [{'msg': 'Laatste exemplaren!', 'class': 'vsi-last-copies'}]
+            pickup_msg = (
+                'Meteen af te halen in de winkel.' if own_stock > 0
+                else 'Morgen afhalen in de winkel.'
+            )
             return True, [
                 {'msg': 'Vandaag besteld, overmorgen geleverd.', 'class': 'vsi-in-stock'},
-                {'msg': 'Meteen af te halen in de winkel.', 'class': 'vsi-in-stock'},
+                {'msg': pickup_msg, 'class': 'vsi-in-stock'},
             ]
 
         delay_str = ''

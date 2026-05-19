@@ -24,5 +24,7 @@ class WebsiteSaleVendorStock(WebsiteSale):
             'partner_id', 'vendor_stock', 'delay', 'x_studio_eta',
         ])
         values['vendor_infos'] = vendor_infos
-        values['own_stock'] = product.sudo().qty_available
+        own_stock = product.sudo().qty_available
+        values['own_stock'] = own_stock
+        values['total_stock'] = own_stock + sum(vi['vendor_stock'] for vi in vendor_infos)
         return values

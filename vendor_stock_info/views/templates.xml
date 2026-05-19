@@ -11,8 +11,11 @@
             <xpath expr="//div[@id='product_details']" position="inside">
                 <div class="vendor-stock-info mt-3">
                     <h6 class="mb-2">Stock</h6>
-                    <p t-if="own_stock" class="mb-2">
-                        <span t-out="int(own_stock)"/>
+                    <p class="mb-2">
+                        Eigen: <span t-out="int(own_stock or 0)"/>
+                        <t t-if="total_stock != own_stock">
+                            &#8211; Totaal (incl. vendor): <span t-out="int(total_stock)"/>
+                        </t>
                     </p>
                     <h6 class="mb-2">Lifecycle</h6>
                     <t t-set="lifecycle_fields" t-value="product.sudo().fields_get(['x_studio_lifecycle'])"/>
