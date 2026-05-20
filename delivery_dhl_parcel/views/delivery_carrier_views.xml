@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_delivery_carrier_form_dhlparcel" model="ir.ui.view">
+    <field name="name">delivery.carrier.form.dhlparcel</field>
+    <field name="model">delivery.carrier</field>
+    <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+    <field name="arch" type="xml">
+
+      <!-- Make the native Pricing (price rules) page available in rule mode -->
+      <xpath expr="//notebook/page[@name='pricing']" position="attributes">
+        <attribute name="invisible">
+          delivery_type != 'base_on_rule' and not (delivery_type == 'dhlparcel' and dhlparcel_pricing_mode == 'rule')
+        </attribute>
+      </xpath>
+
+      <!-- DHL Parcel configuration page -->
+      <xpath expr="//notebook" position="inside">
+        <page string="DHL Parcel" name="dhlparcel"
+              invisible="delivery_type != 'dhlparcel'">
+          <group>
+            <group string="Credentials">
+              <field name="dhlparcel_user_id"/>
+              <field name="dhlparcel_api_key" password="True"/>
+              <field name="dhlparcel_account_id"/>
+            </group>
+            <group string="Shipment">
+              <field name="dhlparcel_default_parcel_type"/>
+              <field name="dhlparcel_pricing_mode"/>
+              <field name="dhlparcel_flat_price"
+                     invisible="dhlparcel_pricing_mode != 'flat'"/>
+            </group>
+          </group>
+          <div class="text-muted">
+            <p>The DHL Parcel API does not return live shipping rates, so the
+               customer price is set here. Choose <b>Flat price</b> for a fixed
+               amount, or <b>Weight-based rules</b> and define tiers on the
+               <b>Pricing</b> tab (use <code>weight</code> as the variable).</p>
+            <p>The shipper address is taken from the warehouse (or company)
+               address. The label is created when the delivery is validated and
+               attached to the picking.</p>
+          </div>
+        </page>
+      </xpath>
+
+    </field>
+  </record>
+
+</odoo>
