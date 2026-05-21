@@ -26,6 +26,7 @@
             </group>
             <group string="Shipment">
               <field name="dhlparcel_default_parcel_type"/>
+              <field name="dhlparcel_default_weight"/>
               <field name="dhlparcel_pricing_mode"/>
               <field name="dhlparcel_flat_price"
                      invisible="dhlparcel_pricing_mode != 'flat'"/>

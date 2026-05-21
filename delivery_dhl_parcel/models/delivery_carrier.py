@@ -74,6 +74,10 @@ class DeliveryCarrier(models.Model):
             ("PALLET", "Pallet"),
         ],
         string="Default parcel type", default="SMALL")
+    dhlparcel_default_weight = fields.Float(
+        "Default weight (kg)", default=1.0,
+        help="Used when a parcel's weight is 0 (e.g. products without a weight "
+             "set). DHL refuses a 0 kg shipment, so this value is sent instead.")
 
     # ------------------------------------------------------------------
     # API plumbing
@@ -242,15 +246,22 @@ class DeliveryCarrier(models.Model):
 
     def dhlparcel_send_shipping(self, pickings):
         res = []
+        default_weight = self.dhlparcel_default_weight or 1.0
         for picking in pickings:
             token = self._dhlparcel_authenticate()
-            packages = self._get_packages_from_picking(
-                picking, self.env["stock.package.type"])
+            try:
+                packages = self._get_packages_from_picking(
+                    picking, self.env["stock.package.type"])
+                weights = [pkg.weight or default_weight for pkg in packages]
+            except UserError:
+                # Nothing packed and zero total weight: ship a single parcel at
+                # the carrier's default weight instead of hard-failing.
+                weights = [default_weight]
             trackers = []
-            for package in packages:
+            for weight in weights:
                 shipment_id = str(uuid.uuid4())
                 payload = self._dhlparcel_build_payload(
-                    picking, shipment_id, package.weight)
+                    picking, shipment_id, weight)
                 response = self._dhlparcel_create_shipment(payload, token)
                 tracker = self._dhlparcel_extract_tracker(response)
                 if tracker:
