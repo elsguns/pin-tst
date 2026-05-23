@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_vendor_stock_info_oog" model="ir.ui.view">
+        <field name="name">Vendor Stock Info (Oogachtend)</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="website_sale.product"/>
+        <field name="website_id" eval="1"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='product_details']" position="inside">
+                <!-- groups="base.group_system": the whole stock block is
+                     rendered only for logged-in administrators. -->
+                <div class="vendor-stock-info mt-3" groups="base.group_system">
+                    <h6 class="mb-2">Stock</h6>
+                    <p class="mb-2">
+                        Stock: <span t-out="int(own_stock or 0)"/>
+                    </p>
+                    <h6 class="mb-2">Lifecycle</h6>
+                    <t t-set="lifecycle_fields" t-value="product.sudo().fields_get(['x_studio_lifecycle'])"/>
+                    <t t-set="lifecycle" t-value="dict(lifecycle_fields['x_studio_lifecycle']['selection']).get(product.sudo().x_studio_lifecycle)"/>
+                    <p t-if="lifecycle" class="mb-2">
+                        <span t-out="product.sudo().x_studio_lifecycle"/> -
+                        <span t-out="lifecycle"/>
+                    </p>
+                    <h6 class="mb-2">Availability</h6>
+                    <t t-set="avail_fields" t-value="product.sudo().fields_get(['x_avail_oog'])"/>
+                    <t t-set="avail" t-value="dict(avail_fields['x_avail_oog']['selection']).get(product.sudo().x_avail_oog)"/>
+                    <p t-if="avail" class="mb-2">
+                        <span t-out="product.sudo().x_avail_oog"/> -
+                        <span t-out="avail"/>
+                    </p>
+                    <t t-foreach="product.avail_messages_oog or []" t-as="m">
+                        <p class="mb-2" t-att-class="m['class']" t-out="m['msg']"/>
+                    </t>
+                </div>
+            </xpath>
+            <!-- Hide the entire add-to-cart form when buy button should be hidden.
+                 Customer-facing (not admin-gated), mirroring the HBL module. -->
+            <xpath expr="//form[@action='/shop/cart/update']" position="attributes">
+                <attribute name="t-if">product.show_buy_button_oog</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
