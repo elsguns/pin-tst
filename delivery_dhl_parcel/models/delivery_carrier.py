@@ -240,6 +240,20 @@ class DeliveryCarrier(models.Model):
             return "MEDIUM"
         return "PALLET"
 
+    @staticmethod
+    def _dhlparcel_default_weight_for_type(parcel_type):
+        """A representative in-tier weight per parcel type, used when the
+        operator picks a type but leaves the weight blank (so the parcel is
+        not declared as 1 kg while typed e.g. MEDIUM)."""
+        return {
+            "ENVELOPE": 0.3,
+            "XSMALL": 1.0,
+            "SMALL": 5.0,
+            "SMALL_MEDIUM": 15.0,
+            "MEDIUM": 25.0,
+            "PALLET": 200.0,
+        }.get(parcel_type, 0.0)
+
     def _dhlparcel_pieces(self, picking):
         """Build the DHL `pieces` list for a picking, from the best source:
 
@@ -255,9 +269,12 @@ class DeliveryCarrier(models.Model):
         if picking.dhl_parcel_line_ids:
             pieces = []
             for line in picking.dhl_parcel_line_ids:
-                weight = line.weight or default_weight
                 ptype = (line.parcel_type or self.dhlparcel_default_parcel_type
-                         or self._dhlparcel_parcel_type_for_weight(weight))
+                         or self._dhlparcel_parcel_type_for_weight(
+                             line.weight or default_weight))
+                weight = (line.weight
+                          or self._dhlparcel_default_weight_for_type(ptype)
+                          or default_weight)
                 pieces.append({"parcelType": ptype,
                                "quantity": line.quantity or 1,
                                "weight": weight})
@@ -363,8 +380,11 @@ class DeliveryCarrier(models.Model):
         return TRACK_URL % (picking.carrier_tracking_ref or "")
 
     def dhlparcel_cancel_shipment(self, picking):
-        # The Parcel API intervention/cancel flow is not wired in yet.
+        # The DHL intervention/cancel API is not wired in yet, so we cannot
+        # cancel at DHL from here. Leave carrier_tracking_ref untouched (so the
+        # standard cancel message still shows the tracker) and warn the user.
         picking.message_post(body=_(
-            "DHL Parcel shipments must currently be cancelled in the DHL "
-            "portal. The local tracking reference has been cleared."))
-        picking.write({"carrier_tracking_ref": False})
+            "Note: this does NOT cancel the shipment at DHL. The DHL "
+            "cancellation API is not yet integrated, so the shipment(s) "
+            "%s must be cancelled manually in the DHL portal."
+        ) % (picking.carrier_tracking_ref or "—"))
