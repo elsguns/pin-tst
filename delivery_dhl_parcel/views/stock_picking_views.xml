@@ -8,19 +8,19 @@
     <field name="arch" type="xml">
       <xpath expr="//notebook" position="before">
         <field name="dhl_is_dhlparcel" invisible="1"/>
+        <field name="dhl_partner_is_company" invisible="1"/>
       </xpath>
       <xpath expr="//notebook" position="inside">
         <page string="DHL Parcels" name="dhl_parcels"
               invisible="not dhl_is_dhlparcel">
           <field name="dhl_parcel_line_ids">
             <tree editable="bottom">
-              <field name="partner_is_company" column_invisible="1"/>
               <field name="parcel_type_consumer"
-                     column_invisible="partner_is_company"
-                     required="not partner_is_company"/>
+                     column_invisible="parent.dhl_partner_is_company"
+                     required="not parent.dhl_partner_is_company"/>
               <field name="parcel_type_business"
-                     column_invisible="not partner_is_company"
-                     required="partner_is_company"/>
+                     column_invisible="not parent.dhl_partner_is_company"
+                     required="parent.dhl_partner_is_company"/>
               <field name="quantity"/>
               <field name="weight"/>
             </tree>
