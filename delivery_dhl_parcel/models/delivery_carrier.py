@@ -18,20 +18,37 @@ TIMEOUT = 30
 TRACK_URL = "https://www.dhlparcel.nl/nl/consument/traceer-uw-zending?tt=%s"
 
 
+def _split_number(token):
+    """Split a house-number token into (number, addition).
+
+    '88' -> ('88', ''); '88/3' -> ('88', '3'); '26B' -> ('26', 'B');
+    '88 bus 3' -> ('88', 'bus 3'). Returns ('', token) if no leading digits.
+    """
+    m = re.match(r"^(\d+)\s*[/-]?\s*(.*)$", token.strip())
+    if m:
+        return m.group(1), m.group(2).strip()
+    return "", token.strip()
+
+
 def _extract_address(partner):
     """Best-effort (street, number, addition) from an Odoo partner.
 
     Handles: BE convention (number in street2), default Odoo (number in
-    street), and mixed (number in street, addition in street2).
+    street, incl. '88/3' / '26B' forms), and mixed (number in street,
+    addition in street2).
     """
     street = (partner.street or "").strip()
     street2 = (partner.street2 or "").strip()
-    if street2 and re.match(r"^\d", street2):
-        m = re.match(r"^(\d+)\s*(.*)$", street2)
-        return street, m.group(1), m.group(2).strip()
-    m = re.search(r"^(.*?)\s+(\d+\w*)\s*$", street)
+    # Pattern A: street2 starts with the house number.
+    if street2 and street2[:1].isdigit():
+        number, addition = _split_number(street2)
+        return street, number, addition
+    # Pattern B: trailing house number embedded in street (\S* keeps '/3', 'B').
+    m = re.search(r"^(.*?)\s+(\d+\S*)\s*$", street)
     if m:
-        return m.group(1).strip(), m.group(2), street2
+        number, addition = _split_number(m.group(2))
+        return m.group(1).strip(), number, (addition or street2)
+    # Pattern C: nothing parseable.
     return street, "", street2
 
 
