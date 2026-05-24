@@ -12,6 +12,9 @@ meant to grow into the customer-facing FAQ.
   access enabled.
 - API credentials: a **User ID** and an **API Key**, plus the short **Account
   ID** (customer number). See "Where do I get the API credentials?" below.
+- To ship a delivery as several parcels (multicollo), enable the **Packages**
+  feature: Inventory > Configuration > Settings > Operations > Packages. Without
+  it there is no "Put in Pack" button and every delivery is a single parcel.
 
 ## Setting up the shipping method
 
@@ -88,6 +91,22 @@ the customer chooses the method at checkout.
 Odoo creates a separate delivery per warehouse, and each becomes its own DHL
 shipment with its own correct sender address. A single label can carry only one
 sender, so different warehouses always mean different shipments.
+
+**I don't see a "Put in Pack" button on the delivery.**
+Enable the Packages feature: Inventory > Configuration > Settings > Operations >
+Packages, then save. The button appears on the delivery afterwards.
+
+**How do I put some products in one box and the rest in another?**
+Odoo packs by quantity. In Detailed Operations, set the quantity only on the
+lines for the first box (set the others to 0), click Put in Pack, then set the
+remaining lines and Put in Pack again. Each Put in Pack bundles whatever
+currently has a quantity and is not yet packed.
+
+**The Package Type dropdown is empty.**
+That is fine; package type is optional. The module decides the DHL parcel type
+from each package's weight, not from the package type, so you can leave it empty.
+(Defining stock.package.type records is only needed if you want to manage box
+dimensions explicitly.)
 
 **An order is packed in several boxes.**
 Put the items into packages on the delivery (native "Put in Pack"). The module
