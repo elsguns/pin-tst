@@ -68,12 +68,16 @@ class DeliveryCarrier(models.Model):
     dhlparcel_flat_price = fields.Float("DHL flat price", default=0.0)
     dhlparcel_default_parcel_type = fields.Selection(
         [
-            ("XSMALL", "XSmall — mailbox parcel"),
-            ("SMALL", "Small — regular parcel"),
-            ("ENVELOPE", "Envelope"),
-            ("PALLET", "Pallet"),
+            ("XSMALL", "XSmall — mailbox (max 2 kg)"),
+            ("SMALL", "Small — max 10 kg"),
+            ("SMALL_MEDIUM", "Small-Medium — 10-20 kg"),
+            ("MEDIUM", "Medium — 20-31 kg"),
+            ("PALLET", "Pallet — 31 kg and up"),
         ],
-        string="Default parcel type", default="SMALL")
+        string="Parcel type",
+        help="Leave empty to pick the type automatically from each parcel's "
+             "weight (the usual choice). Set a value to force that type for "
+             "every parcel, e.g. a fixed B2C webshop method.")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -202,15 +206,37 @@ class DeliveryCarrier(models.Model):
             "phoneNumber": partner.phone or "",
         }
 
+    @staticmethod
+    def _dhlparcel_parcel_type_for_weight(weight):
+        """Map a parcel weight (kg) to a DHL BE parcel-type tier.
+
+        Tiers from GET /parcel-types (BE business): SMALL <=10, SMALL_MEDIUM
+        <=20, MEDIUM <=31, PALLET above. XSMALL (mailbox, <=2 kg + tiny
+        dimensions) is never auto-selected; it must be chosen explicitly.
+        """
+        w = weight or 0
+        if w <= 10:
+            return "SMALL"
+        if w <= 20:
+            return "SMALL_MEDIUM"
+        if w <= 31:
+            return "MEDIUM"
+        return "PALLET"
+
     def _dhlparcel_build_payload(self, picking, shipment_id, weights):
         """One shipment (multicollo): one piece per package in `weights`.
-        DHL returns a trackerCode per piece and one multi-page label PDF."""
+        DHL returns a trackerCode per piece and one multi-page label PDF.
+
+        Parcel type per piece: the carrier's fixed type if set, otherwise
+        auto-derived from the piece weight.
+        """
         ref = picking.origin or picking.name
-        pieces = [{
-            "parcelType": self.dhlparcel_default_parcel_type,
-            "quantity": 1,
-            "weight": w or 1.0,
-        } for w in weights]
+        pieces = []
+        for w in weights:
+            w = w or 1.0
+            ptype = (self.dhlparcel_default_parcel_type
+                     or self._dhlparcel_parcel_type_for_weight(w))
+            pieces.append({"parcelType": ptype, "quantity": 1, "weight": w})
         return {
             "shipmentId": shipment_id,
             "orderReference": ref,

@@ -53,6 +53,15 @@ weights on the products, or rely on the carrier's **Default weight (kg)** field,
 which is sent when the parcel weight is 0. Note that an inaccurate declared
 weight can lead DHL to re-weigh the parcel and adjust the invoice.
 
+**How is the parcel type chosen?**
+By default the module picks it automatically from each parcel's weight, using
+the DHL Belgium tiers: up to 10 kg = Small, 10-20 kg = Small-Medium, 20-31 kg =
+Medium, above 31 kg = Pallet. (XSmall / mailbox is never auto-selected because
+it also has a tiny size limit; choose it explicitly if you need it.) To force a
+single type for every parcel, set the Parcel type field on the carrier; leave it
+empty for automatic selection. A regular parcel maxes at 31 kg, so a heavier
+shipment must be packed into several boxes (each box becomes one piece).
+
 **Where do I set the shipping price? The Fixed Price field seems ignored.**
 The DHL Parcel API does not return live rates, so the price is set on the
 carrier itself. Choose **Pricing mode = Flat** and fill in **DHL flat price**,
