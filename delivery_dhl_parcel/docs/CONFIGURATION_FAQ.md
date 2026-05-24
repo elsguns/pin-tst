@@ -95,7 +95,8 @@ sender, so different warehouses always mean different shipments.
 **How do I quickly declare several parcels (the portal-style way)?**
 On a DHL delivery there is a **DHL Parcels** tab. Add one row per parcel, just
 like the My DHL Parcel portal: pick the parcel type, set the quantity, and
-optionally a weight. The parcel-type list adapts to the customer (a person sees
+optionally a weight (if left blank, a weight matching the chosen type is sent,
+so a "Parcel up to 31 kg" is not declared as 1 kg). The parcel-type list adapts to the customer (a person sees
 envelope / mailbox / parcel options; a company sees parcel / pallet options).
 The shipment is created with exactly those parcels. This avoids the Put-in-Pack
 splitting work; it is the fastest way to ship one order as several boxes. Leave
