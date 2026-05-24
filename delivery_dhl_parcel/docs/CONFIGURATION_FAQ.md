@@ -98,11 +98,22 @@ dashboard, with N parcels under it. A parcel is only split into multiple pieces
 when you actually pack it into multiple boxes; a single light order stays one
 piece.
 
-**Can I ship outside Benelux?**
-Not yet. The module currently sends the default (domestic) product with no
-customs data. International shipping (Parcel Connect or Europlus, plus customs
-declarations for non-EU destinations) is a separate feature, and it also
-depends on the account's contract including those products.
+**Which destinations can I ship to?**
+Benelux works now: BE, NL and LU are all handled by the default flow. DHL
+resolves the correct product automatically (DFY or Europlus for NL, Parcel
+Connect or Europlus for LU) and the parcel-type tiers are available. Set the
+carrier's Countries to BE, NL, LU.
+
+Shipping beyond Benelux (DE, FR, GB, ...) is a separate, not-yet-built feature.
+Those routes use different products (DHL Parcel Connect, Europlus International,
+Europlus Pallet) and, for non-EU destinations such as GB, a customs
+declaration. It also depends on your DHL contract including those products.
+
+**Does the parcel type depend on whether the customer is a person or a company?**
+No. DHL's parcel-type catalog is the same regardless of recipient; the
+business-versus-consumer difference is handled by the product DHL selects
+automatically (a home-delivery product for consumers, a business product
+otherwise). So you do not configure separate parcel types per recipient type.
 
 **How do I cancel a shipment?**
 For now, in the DHL portal. The module's cancel action clears the local tracking
