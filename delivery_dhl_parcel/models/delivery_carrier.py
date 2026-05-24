@@ -202,8 +202,15 @@ class DeliveryCarrier(models.Model):
             "phoneNumber": partner.phone or "",
         }
 
-    def _dhlparcel_build_payload(self, picking, shipment_id, weight):
+    def _dhlparcel_build_payload(self, picking, shipment_id, weights):
+        """One shipment (multicollo): one piece per package in `weights`.
+        DHL returns a trackerCode per piece and one multi-page label PDF."""
         ref = picking.origin or picking.name
+        pieces = [{
+            "parcelType": self.dhlparcel_default_parcel_type,
+            "quantity": 1,
+            "weight": w or 1.0,
+        } for w in weights]
         return {
             "shipmentId": shipment_id,
             "orderReference": ref,
@@ -211,22 +218,19 @@ class DeliveryCarrier(models.Model):
             "receiver": self._dhlparcel_build_receiver(picking.partner_id),
             "shipper": self._dhlparcel_build_shipper(picking),
             "options": [{"key": "REFERENCE", "input": ref}],
+            # Leave product empty: DHL resolves it from the recipient/route.
             "product": "",
             "returnLabel": False,
-            "pieces": [{
-                "parcelType": self.dhlparcel_default_parcel_type,
-                "quantity": 1,
-                "weight": weight or 1.0,
-            }],
+            "pieces": pieces,
         }
 
-    def _dhlparcel_extract_tracker(self, response):
-        if response.get("trackerCode"):
-            return response["trackerCode"]
-        for piece in response.get("pieces") or []:
-            if piece.get("trackerCode"):
-                return piece["trackerCode"]
-        return ""
+    def _dhlparcel_extract_trackers(self, response):
+        """All piece tracker codes from a (multicollo) shipment response."""
+        trackers = [pc["trackerCode"] for pc in (response.get("pieces") or [])
+                    if pc.get("trackerCode")]
+        if not trackers and response.get("trackerCode"):
+            trackers.append(response["trackerCode"])
+        return trackers
 
     # ------------------------------------------------------------------
     # carrier API (called by Odoo's delivery framework)
@@ -249,35 +253,37 @@ class DeliveryCarrier(models.Model):
         default_weight = self.dhlparcel_default_weight or 1.0
         for picking in pickings:
             token = self._dhlparcel_authenticate()
+            # One Odoo delivery == one DHL shipment (multicollo): one piece per
+            # package. Native packing decides the package count and weights;
+            # fall back to a single default-weight piece when nothing is packed.
             try:
                 packages = self._get_packages_from_picking(
                     picking, self.env["stock.package.type"])
                 weights = [pkg.weight or default_weight for pkg in packages]
             except UserError:
-                # Nothing packed and zero total weight: ship a single parcel at
-                # the carrier's default weight instead of hard-failing.
                 weights = [default_weight]
-            trackers = []
-            for weight in weights:
-                shipment_id = str(uuid.uuid4())
-                payload = self._dhlparcel_build_payload(
-                    picking, shipment_id, weight)
-                response = self._dhlparcel_create_shipment(payload, token)
-                tracker = self._dhlparcel_extract_tracker(response)
-                if tracker:
-                    trackers.append(tracker)
-                try:
-                    pdf = self._dhlparcel_fetch_label(shipment_id, token)
-                    fname = "DHL-%s.pdf" % (tracker or shipment_id[:8])
-                    picking.message_post(
-                        body=_("DHL Parcel shipment created. Tracker: %s")
-                        % (tracker or "—"),
-                        attachments=[(fname, pdf)])
-                except UserError as exc:
-                    picking.message_post(body=_(
-                        "DHL shipment created (tracker %(t)s) but the label "
-                        "PDF could not be fetched: %(e)s")
-                        % {"t": tracker or "—", "e": exc})
+
+            shipment_id = str(uuid.uuid4())
+            payload = self._dhlparcel_build_payload(picking, shipment_id, weights)
+            response = self._dhlparcel_create_shipment(payload, token)
+            trackers = self._dhlparcel_extract_trackers(response)
+
+            # A single GET /labels/{shipmentId} returns all piece labels in one
+            # multi-page PDF.
+            try:
+                pdf = self._dhlparcel_fetch_label(shipment_id, token)
+                fname = "DHL-%s.pdf" % (trackers[0] if trackers else shipment_id[:8])
+                picking.message_post(
+                    body=_("DHL Parcel shipment created (%(n)s piece(s)). "
+                           "Trackers: %(t)s")
+                    % {"n": len(weights), "t": ", ".join(trackers) or "—"},
+                    attachments=[(fname, pdf)])
+            except UserError as exc:
+                picking.message_post(body=_(
+                    "DHL shipment created (trackers %(t)s) but the label PDF "
+                    "could not be fetched: %(e)s")
+                    % {"t": ", ".join(trackers) or "—", "e": exc})
+
             price = 0.0
             if picking.sale_id:
                 rate = self.dhlparcel_rate_shipment(picking.sale_id)

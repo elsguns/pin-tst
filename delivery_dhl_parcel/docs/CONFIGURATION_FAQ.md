@@ -81,8 +81,13 @@ shipment with its own correct sender address. A single label can carry only one
 sender, so different warehouses always mean different shipments.
 
 **An order is packed in several boxes.**
-Put the items into packages on the delivery. The module then creates one DHL
-shipment and one label per package.
+Put the items into packages on the delivery (native "Put in Pack"). The module
+then creates **one DHL shipment with one piece per package** (multicollo): each
+piece gets its own tracking code, and all labels come back in a single
+multi-page PDF attached to the delivery. One delivery is one shipment in the DHL
+dashboard, with N parcels under it. A parcel is only split into multiple pieces
+when you actually pack it into multiple boxes; a single light order stays one
+piece.
 
 **Can I ship outside Benelux?**
 Not yet. The module currently sends the default (domestic) product with no
