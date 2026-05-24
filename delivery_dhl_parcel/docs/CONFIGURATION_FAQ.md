@@ -92,6 +92,15 @@ Odoo creates a separate delivery per warehouse, and each becomes its own DHL
 shipment with its own correct sender address. A single label can carry only one
 sender, so different warehouses always mean different shipments.
 
+**How do I quickly declare several parcels (the portal-style way)?**
+On a DHL delivery there is a **DHL Parcels** tab. Add one row per parcel, just
+like the My DHL Parcel portal: pick the parcel type, set the quantity, and
+optionally a weight. The parcel-type list adapts to the customer (a person sees
+envelope / mailbox / parcel options; a company sees parcel / pallet options).
+The shipment is created with exactly those parcels. This avoids the Put-in-Pack
+splitting work; it is the fastest way to ship one order as several boxes. Leave
+the table empty to fall back to the delivery's packages, or to a single parcel.
+
 **I don't see a "Put in Pack" button on the delivery.**
 Enable the Packages feature: Inventory > Configuration > Settings > Operations >
 Packages, then save. The button appears on the delivery afterwards.

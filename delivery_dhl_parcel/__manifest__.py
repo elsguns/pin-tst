@@ -22,7 +22,9 @@
     'version': '17.0.0.1.0',
     'depends': ['stock_delivery'],
     'data': [
+        'security/ir.model.access.csv',
         'views/delivery_carrier_views.xml',
+        'views/stock_picking_views.xml',
     ],
     'installable': True,
     'application': False,

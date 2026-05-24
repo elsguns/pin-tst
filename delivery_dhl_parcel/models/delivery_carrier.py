@@ -240,20 +240,48 @@ class DeliveryCarrier(models.Model):
             return "MEDIUM"
         return "PALLET"
 
-    def _dhlparcel_build_payload(self, picking, shipment_id, weights):
-        """One shipment (multicollo): one piece per package in `weights`.
-        DHL returns a trackerCode per piece and one multi-page label PDF.
+    def _dhlparcel_pieces(self, picking):
+        """Build the DHL `pieces` list for a picking, from the best source:
 
-        Parcel type per piece: the carrier's fixed type if set, otherwise
-        auto-derived from the piece weight.
+        1. Explicit DHL parcel lines (the dashboard-style table) if present;
+        2. else native packages (one piece per package);
+        3. else a single auto piece at the default weight.
+
+        Parcel type: the line's chosen type if set, otherwise the carrier's
+        fixed type, otherwise auto-derived from the piece weight.
         """
-        ref = picking.origin or picking.name
+        default_weight = self.dhlparcel_default_weight or 1.0
+
+        if picking.dhl_parcel_line_ids:
+            pieces = []
+            for line in picking.dhl_parcel_line_ids:
+                weight = line.weight or default_weight
+                ptype = (line.parcel_type or self.dhlparcel_default_parcel_type
+                         or self._dhlparcel_parcel_type_for_weight(weight))
+                pieces.append({"parcelType": ptype,
+                               "quantity": line.quantity or 1,
+                               "weight": weight})
+            return pieces
+
+        try:
+            packages = self._get_packages_from_picking(
+                picking, self.env["stock.package.type"])
+            weights = [pkg.weight or default_weight for pkg in packages]
+        except UserError:
+            weights = [default_weight]
         pieces = []
         for w in weights:
-            w = w or 1.0
+            w = w or default_weight
             ptype = (self.dhlparcel_default_parcel_type
                      or self._dhlparcel_parcel_type_for_weight(w))
             pieces.append({"parcelType": ptype, "quantity": 1, "weight": w})
+        return pieces
+
+    def _dhlparcel_build_payload(self, picking, shipment_id, pieces):
+        """One shipment (multicollo): `pieces` already built by
+        _dhlparcel_pieces. DHL returns a trackerCode per piece and one
+        multi-page label PDF."""
+        ref = picking.origin or picking.name
         return {
             "shipmentId": shipment_id,
             "orderReference": ref,
@@ -293,21 +321,15 @@ class DeliveryCarrier(models.Model):
 
     def dhlparcel_send_shipping(self, pickings):
         res = []
-        default_weight = self.dhlparcel_default_weight or 1.0
         for picking in pickings:
             token = self._dhlparcel_authenticate()
-            # One Odoo delivery == one DHL shipment (multicollo): one piece per
-            # package. Native packing decides the package count and weights;
-            # fall back to a single default-weight piece when nothing is packed.
-            try:
-                packages = self._get_packages_from_picking(
-                    picking, self.env["stock.package.type"])
-                weights = [pkg.weight or default_weight for pkg in packages]
-            except UserError:
-                weights = [default_weight]
+            # One Odoo delivery == one DHL shipment (multicollo). The pieces
+            # come from the DHL parcel lines, else native packages, else a
+            # single auto piece.
+            pieces = self._dhlparcel_pieces(picking)
 
             shipment_id = str(uuid.uuid4())
-            payload = self._dhlparcel_build_payload(picking, shipment_id, weights)
+            payload = self._dhlparcel_build_payload(picking, shipment_id, pieces)
             response = self._dhlparcel_create_shipment(payload, token)
             trackers = self._dhlparcel_extract_trackers(response)
 
@@ -316,10 +338,11 @@ class DeliveryCarrier(models.Model):
             try:
                 pdf = self._dhlparcel_fetch_label(shipment_id, token)
                 fname = "DHL-%s.pdf" % (trackers[0] if trackers else shipment_id[:8])
+                piece_count = len(trackers) or sum(p["quantity"] for p in pieces)
                 picking.message_post(
                     body=_("DHL Parcel shipment created (%(n)s piece(s)). "
                            "Trackers: %(t)s")
-                    % {"n": len(weights), "t": ", ".join(trackers) or "—"},
+                    % {"n": piece_count, "t": ", ".join(trackers) or "—"},
                     attachments=[(fname, pdf)])
             except UserError as exc:
                 picking.message_post(body=_(
