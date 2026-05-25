@@ -27,61 +27,29 @@ class ProductTemplate(models.Model):
             # Stock relies on on-hand quants only; no vendor stock is considered.
             own_stock = p.sudo().qty_available
             show, messages = self._buy_decision_oog(
-                own_stock, own_stock, p.sudo().x_studio_lifecycle, None,
+                own_stock, p.sudo().x_studio_lifecycle,
             )
             p.show_buy_button_oog = show
             p.avail_messages_oog = messages
 
     @api.model
-    def _buy_decision_oog(self, total_stock, own_stock, lifecycle, vendor):
-        """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...]).
-
-        `vendor` is kept in the signature for message compatibility but is
-        currently always None (this module does not use vendor lines), so
-        delay/ETA text is simply omitted.
+    def _buy_decision_oog(self, stock, lifecycle):
+        """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...]) for the
+        Oogachtend website, based on on-hand stock + lifecycle only.
         """
-        if total_stock > 0:
+        if stock > 0:
             if lifecycle in ('4', '9'):
-                return True, [{'msg': 'Laatste exemplaren!', 'class': 'vsi-last-copies'}]
-            pickup_msg = (
-                'Meteen af te halen in de winkel.' if own_stock > 0
-                else 'Morgen afhalen in de winkel.'
-            )
-            return True, [
-                {'msg': 'Vandaag besteld, overmorgen geleverd.', 'class': 'vsi-in-stock'},
-                {'msg': pickup_msg, 'class': 'vsi-in-stock'},
-            ]
-
-        delay_str = ''
-        eta_str = ''
-        if vendor:
-            delay = vendor.get('delay', 0)
-            delay_str = '%d à %d dagen' % (delay + 1, delay + 2)
-            eta = vendor.get('x_studio_eta')
-            if eta:
-                eta_str = eta.strftime('%d/%m/%Y') if hasattr(eta, 'strftime') else str(eta)
+                return True, [{'msg': 'Laatste exemplaren', 'class': 'vsi-last-copies'}]
+            return True, []
 
         if lifecycle == '1':
-            msg = 'Aangekondigd'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
-            return False, [{'msg': msg, 'class': 'vsi-announced'}]
-
+            return False, [{'msg': 'Aangekondigd', 'class': 'vsi-announced'}]
         if lifecycle == '2':
-            messages = [{'msg': 'Geleverd binnen ' + delay_str, 'class': 'vsi-available'}]
-            if vendor and vendor.get('vendor_stock', 0) > 0:
-                messages.append({'msg': 'Morgen afhalen in de winkel', 'class': 'vsi-available'})
-            return True, messages
-
+            return True, []
         if lifecycle == '3':
-            msg = 'In herdruk'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
-            return False, [{'msg': msg, 'class': 'vsi-reprint'}]
-
+            return False, [{'msg': 'In herdruk', 'class': 'vsi-reprint'}]
         if lifecycle in ('4', '9'):
             return False, [{'msg': 'Uitverkocht', 'class': 'vsi-sold-out'}]
-
         if lifecycle == '5':
             return False, [{'msg': 'Uitgave geannuleerd', 'class': 'vsi-cancelled'}]
 
