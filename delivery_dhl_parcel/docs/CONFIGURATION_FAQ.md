@@ -72,6 +72,14 @@ or **Pricing mode = Weight-based rules** and define the tiers on the **Pricing**
 tab (use `weight` as the variable). The generic "Fixed Price" field of the base
 carrier is not used by this provider.
 
+**The DHL method is missing / I can't select it on a delivery.**
+A shipping method is filtered by company: its Company is **inherited from its
+delivery product**, so you can't change it on the carrier directly. If the
+delivery product has a company set, the carrier only appears for that company's
+deliveries. Fix: open the delivery product and clear its Company (blank = all
+companies), or set it to the company you ship from. Destination country also
+matters: the method only offers itself for the countries listed on the carrier.
+
 **Nothing happens when I validate the delivery.**
 Check that **Integration Level** is set to **Get Rate and Create Shipment**.
 With "Get Rate" only, no label is created on validation.
