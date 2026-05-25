@@ -34,7 +34,7 @@
                     </t>
                     <h6 class="mb-2">Buy button</h6>
                     <p class="mb-2">
-                        show_buy_button_oog: <span t-out="product.show_buy_button_oog"/>
+                        show_buy_button_oog: <span t-out="'True' if product.show_buy_button_oog else 'False'"/>
                     </p>
                 </div>
             </xpath>
