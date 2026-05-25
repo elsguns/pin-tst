@@ -62,10 +62,6 @@
                     </table>
                 </div>
             </xpath>
-            <!-- Hide the entire add-to-cart form when buy button should be hidden -->
-            <xpath expr="//form[@action='/shop/cart/update']" position="attributes">
-                <attribute name="t-if">product.show_buy_button</attribute>
-            </xpath>
         </field>
     </record>
 
