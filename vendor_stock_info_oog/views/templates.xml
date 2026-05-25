@@ -32,6 +32,10 @@
                     <t t-foreach="product.avail_messages_oog or []" t-as="m">
                         <p class="mb-2" t-att-class="m['class']" t-out="m['msg']"/>
                     </t>
+                    <h6 class="mb-2">Buy button</h6>
+                    <p class="mb-2">
+                        show_buy_button_oog: <span t-out="product.show_buy_button_oog"/>
+                    </p>
                 </div>
             </xpath>
         </field>
