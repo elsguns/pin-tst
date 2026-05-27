@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="address_b2b" inherit_id="website_sale.address_b2b">
+            <xpath expr="//label[@for='company_name']" position="replace">
+                <label class="col-form-label font-weight-normal label-optional" for="company_name">Company Name (<i>when
+                    applicable</i>)
+                </label>
+            </xpath>
+            <xpath expr="//label[@for='vat']" position="replace">
+                <label class="col-form-label font-weight-normal label-optional" for="vat">TIN / VAT (<i>when
+                    applicable</i>)
+                </label>
+            </xpath>
+        </template>
+    </data>
+</odoo>

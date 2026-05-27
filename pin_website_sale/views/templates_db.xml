@@ -1,0 +1,151 @@
+<odoo>
+    <data>
+        <t t-name="website_studio.author">
+            <t t-call="website.layout">
+                <div class="container o_website_listing_layout">
+                    <div class="oe_structure oe_new"/>
+                    <section class="s_searchbar o_colored_level o_cc">
+                        <div class="row">
+                            <div class="col-lg-12" style="margin-top: 1.5rem;">
+                                <div class="btn-toolbar">
+                                    <form method="get" class="o_searchbar_form s_searchbar_input me-auto flex-grow-1">
+                                        <div role="search" class="input-group">
+                                            <input type="search" name="search"
+                                                   class="search-query form-control oe_search_box border-0 text-bg-light"
+                                                   placeholder="Search..." t-att-value="search" autocomplete="off"/>
+                                            <button type="submit" aria-label="Search" title="Search"
+                                                    class="btn oe_search_button btn-light">
+                                                <i class="oi oi-search"/>
+                                                <span t-if="search" class="oe_search_found">
+                                                    <small>(
+                                                        <t t-out="search_count or 0"/>
+                                                        found)
+                                                    </small>
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <input name="order" type="hidden" class="o_search_order_by"
+                                               t-att-value="order_by if order_by else 'name asc'"/>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div t-attf-class="row mx-n2 mt8 #{'o_website_grid' if layout_mode == 'grid' else 'o_website_list'}">
+                        <t t-foreach="records" t-as="record">
+                            <div t-attf-class="#{'col-lg-3 col-md-4 col-sm-6 px-2 col-xs-12' if layout_mode == 'grid' else ''}">
+                                <a class="o_website_record text-decoration-none d-grid card w-100 mb-3"
+                                   t-att-href="record_to_url(record)">
+                                    <div class="d-flex">
+                                        <t>
+                                            <img t-if="record.x_studio_image" class="o_website_image h-100 w-100"
+                                                 style="" t-attf-src="data:image/png;base64,{{record.x_studio_image}}"/>
+                                            <div t-else="" class="o_website_image bg-light h-100 w-100"/>
+                                        </t>
+                                    </div>
+                                    <div class="o_website_tags text-end me-1">
+                                        <t t-if="record.x_studio_tag_ids" t-foreach="record.x_studio_tag_ids"
+                                           t-as="tag">
+                                            <span t-field="tag.display_name"
+                                                  t-attf-class="badge o_website_tag #{'o_tag_color_'+str(tag.x_color)}"/>
+                                        </t>
+                                    </div>
+                                    <div class="card-body py-2 px-3">
+                                        <h5 class="card-title">
+                                            <span t-field="record.display_name"/>
+                                        </h5>
+                                        <div class="card-text d-flex flex-column flex-grow-1 mt-1">
+                                            <span class="mb-0"/>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="oe_structure oe_new"/>
+                    <div t-if="pager" class="o_portal_pager d-flex justify-content-center my-4">
+                        <t t-call="portal.pager"/>
+                    </div>
+                </div>
+            </t>
+        </t>
+        <t t-name="website_studio.authors-3">
+            <t t-call="website.layout">
+                <div id="o_website_record_page wrap">
+                    <div class="oe_structure oe_new"
+                         data-editor-message="Drag building blocks to customize the header of single record pages."/>
+                    <div class="container" style="margin-top: 1.5rem;">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 d-flex align-items-center">
+                                <!--form method="get" class="o_searchbar_form s_searchbar_input me-auto flex-grow-1">
+                                    <div role="search" class="input-group">
+                                        <input type="search" name="search"
+                                               class="search-query form-control oe_search_box border-0 text-bg-light"
+                                               placeholder="Search..." t-att-value="search" autocomplete="off"/>
+                                        <button type="submit" aria-label="Search" title="Search"
+                                                class="btn oe_search_button btn-light">
+                                            <i class="oi oi-search"/>
+                                            <span t-if="search" class="oe_search_found">
+                                                <small>(
+                                                    <t t-out="search_count or 0"/>
+                                                    found)
+                                                </small>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <input name="order" type="hidden" class="o_search_order_by"
+                                           t-att-value="order_by if order_by else 'name asc'"/>
+                                </form-->
+                            </div>
+                            <div class="col-lg-6 d-flex align-items-center">
+                                <ol t-if="listing" class="breadcrumb p-0 my-2">
+                                    <li class="breadcrumb-item o_not_editable">
+                                        <a t-att-href="listing['href']">
+                                            <!--span t-out="listing['name']"/-->
+                                            <span>All Authors</span>
+                                        </a>
+                                    </li>
+                                    <li class="breadcrumb-item active">
+                                        <span t-field="record.display_name"/>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="row mb-5">
+                            <div class="col-lg-6 mt-lg-4 col-sm-12">
+                                <img t-if="record.x_studio_image" class="o_website_image me-2 rounded-3 img-fluid" style=""
+                                     t-attf-src="data:image/png;base64,{{record.x_studio_image}}"/>
+                                <div t-else="" class="o_website_image bg-light me-2 rounded-3"/>
+                            </div>
+                            <div class="col-lg-6 mt-lg-4 col-sm-12">
+                                <h1 style="font-weight: 600; font-size: 2rem;">
+                                    <span t-field="record.display_name"/>
+                                </h1>
+                                <div class="h3" t-field="record.x_studio_summary"/>
+                                <div class="o_website_tags ">
+                                    <t t-if="record.x_studio_tag_ids" t-foreach="record.x_studio_tag_ids" t-as="tag">
+                                        <span t-field="tag.display_name"
+                                              t-attf-class="badge o_website_tag #{'o_tag_color_'+str(tag.x_color)}"/>
+                                    </t>
+                                </div>
+                                <div class="o_website_html mb-5" t-field="record.x_studio_website_description"
+                                     data-editor-message="Drag building blocks to edit the website description of this record."/>
+                                <div class=" mb-5" t-field="record.x_studio_links"/>
+                                <div class="fw-bold text-uppercase">BOOKS BY THIS AUTHOR</div>
+                                <ul>
+                                    <t t-foreach="record.x_studio_product_ids" t-as="book">
+                                        <li>
+                                            <a t-attf-href="{{ book.website_url }}" t-esc="book.name"/>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="oe_structure oe_new"
+                         data-editor-message="Drag building blocks to customize the footer of single record pages."/>
+                </div>
+            </t>
+        </t>
+    </data>
+</odoo>

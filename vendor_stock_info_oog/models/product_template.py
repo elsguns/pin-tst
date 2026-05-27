@@ -31,14 +31,6 @@ class ProductTemplate(models.Model):
         for p in self:
             p.x_lifecycle_end_oog = 1 if p.x_studio_lifecycle in OOG_LIFECYCLE_END_GROUP else 0
 
-    @api.model
-    def _search_get_detail(self, website, order, options):
-        res = super()._search_get_detail(website, order, options)
-        if website.id == OOG_WEBSITE_ID:
-            existing = res.get('order') or ''
-            res['order'] = ('x_lifecycle_end_oog asc, ' + existing).rstrip(', ')
-        return res
-
     @api.depends_context('website_id')
     @api.depends('x_studio_lifecycle', 'qty_available')
     def _compute_delivery_info_oog(self):
