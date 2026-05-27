@@ -5,6 +5,9 @@ from odoo import models, fields, api
 
 OOG_VISIBLE_AVAILABILITY = ['Y']
 OOG_WEBSITE_ID = 1
+# Lifecycle values that should appear at the end of the /shop listing
+# (in herdruk / uitverkocht / uitgave geannuleerd / sold-out variant).
+OOG_LIFECYCLE_END_GROUP = ('3', '4', '5', '9')
 
 
 class ProductTemplate(models.Model):
@@ -14,6 +17,27 @@ class ProductTemplate(models.Model):
     # same database without their computed fields/methods colliding.
     show_buy_button_oog = fields.Boolean(compute='_compute_delivery_info_oog')
     avail_messages_oog = fields.Json(compute='_compute_delivery_info_oog')
+
+    # Stored bucket flag so the listing can ORDER BY it — Odoo's order parser
+    # doesn't accept CASE WHEN, so we need a real column.
+    x_lifecycle_end_oog = fields.Integer(
+        compute='_compute_x_lifecycle_end_oog',
+        store=True,
+        index=True,
+    )
+
+    @api.depends('x_studio_lifecycle')
+    def _compute_x_lifecycle_end_oog(self):
+        for p in self:
+            p.x_lifecycle_end_oog = 1 if p.x_studio_lifecycle in OOG_LIFECYCLE_END_GROUP else 0
+
+    @api.model
+    def _search_get_detail(self, website, order, options):
+        res = super()._search_get_detail(website, order, options)
+        if website.id == OOG_WEBSITE_ID:
+            existing = res.get('order') or ''
+            res['order'] = ('x_lifecycle_end_oog asc, ' + existing).rstrip(', ')
+        return res
 
     @api.depends_context('website_id')
     @api.depends('x_studio_lifecycle', 'qty_available')
