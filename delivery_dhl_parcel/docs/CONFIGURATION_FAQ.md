@@ -33,6 +33,60 @@ meant to grow into the customer-facing FAQ.
 7. Optional: **Website**. Bind the method to one website for webshop checkout,
    or leave it empty to make it available everywhere.
 
+## DHL-side permissions and feature gating
+
+Beyond the credentials, several features depend on what DHL has activated on
+your API key and contract. Most are arranged once during onboarding; ask your
+DHL technical contact when in doubt.
+
+**Required for the basic flow (creating labels):**
+- The API key's JWT token must include the role **`label-service.B2X`**. Without
+  it, label creation fails. If the module reports authentication or "rejected
+  the shipment" errors that mention permissions, this is the first thing to
+  verify with DHL.
+
+**Optional, each gated by a separate DHL-side setting:**
+
+- **Live pricing in API responses.** The `/parcel-types` endpoint has a `price`
+  field in its schema, but it is only returned when DHL has activated pricing
+  visibility on the API key. Without it, the module uses the carrier's
+  configured price (flat amount or weight rules) instead of fetching live
+  rates. Ask DHL whether pricing visibility can be enabled on your key.
+
+- **Cancellation via API** (`/interventions/cancel`). The exact endpoint and
+  request body must be obtained from your DHL tech contact, and the API key
+  needs the matching intervention role. Until that is in place, the module's
+  cancel action only clears the local tracking reference and posts a chatter
+  note advising you to cancel the shipment in the DHL portal. No API call is
+  attempted, so nothing fails.
+
+- **International shipping** (Parcel Connect / Europlus / Europlus Pallet /
+  Europlus International). These require the corresponding products to be part
+  of your DHL contract. Confirm with DHL which products are active on your
+  account before configuring the module for non-Benelux destinations.
+
+- **Returns** (`returnLabel: true` and the `ADD_RETURN_LABEL` option). The
+  `/shipments` endpoint accepts these without an extra permission, provided
+  your DHL contract includes the relevant return product (DFY-RETURN /
+  EPL-RETURN / RETURN-CON).
+
+**How the module behaves when a permission is missing:**
+- No `label-service.B2X`: a clear UserError points to credentials/permissions.
+- No live pricing: the configured flat/weight-rule price is used silently. No
+  failure.
+- No cancel permission: the cancel action posts a clear chatter note ("DHL
+  cancellation API not integrated yet, please cancel in the portal"). No
+  silent failure.
+- Contract gaps (missing product, missing route): the API's own error message
+  is surfaced verbatim in the chatter, which usually identifies the contract
+  issue.
+
+**If you suspect a permission issue:**
+The roles on your token can be inspected by enabling debug logging on the
+`delivery_dhl_parcel` logger and inspecting the authentication response. Share
+the list of roles you have with your DHL tech contact and ask which additional
+role activates the missing feature.
+
 ## Required data in Odoo (often missed)
 
 - **The warehouse address must be complete** (company name, street, house
