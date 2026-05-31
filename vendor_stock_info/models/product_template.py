@@ -15,7 +15,8 @@ class ProductTemplate(models.Model):
     avail_messages = fields.Json(compute='_compute_delivery_info')
 
     @api.depends_context('website_id')
-    @api.depends('x_studio_lifecycle', 'qty_available', 'seller_ids')
+    @api.depends('x_studio_lifecycle', 'qty_available', 'seller_ids',
+                 'x_studio_publish_date', 'x_studio_reprint_date')
     def _compute_delivery_info(self):
         website = self.env['website'].get_current_website()
         for p in self:
@@ -23,8 +24,9 @@ class ProductTemplate(models.Model):
                 p.show_buy_button = True
                 p.avail_messages = []
                 continue
-            own_stock = p.sudo().qty_available
-            vendor_infos = p.sudo().seller_ids.filtered(
+            ps = p.sudo()
+            own_stock = ps.qty_available
+            vendor_infos = ps.seller_ids.filtered(
                 lambda s: s.company_id.id == 2
             ).sorted('sequence').read([
                 'partner_id', 'vendor_stock', 'delay', 'x_studio_eta',
@@ -32,7 +34,8 @@ class ProductTemplate(models.Model):
             total_stock = own_stock + sum(vi['vendor_stock'] for vi in vendor_infos)
             vendor = self._pick_best_vendor(vendor_infos)
             show, messages = self._buy_decision(
-                total_stock, own_stock, p.sudo().x_studio_lifecycle, vendor,
+                total_stock, own_stock, ps.x_studio_lifecycle, vendor,
+                ps.x_studio_publish_date, ps.x_studio_reprint_date,
             )
             p.show_buy_button = show
             p.avail_messages = messages
@@ -57,8 +60,16 @@ class ProductTemplate(models.Model):
         return vendor_infos[0] if vendor_infos else None
 
     @api.model
-    def _buy_decision(self, total_stock, own_stock, lifecycle, vendor):
-        """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...])."""
+    def _buy_decision(self, total_stock, own_stock, lifecycle, vendor,
+                      publish_date, reprint_date):
+        """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...]).
+
+        publish_date / reprint_date come from product.template Studio fields
+        (x_studio_publish_date / x_studio_reprint_date) and drive the
+        "Leverbaar vanaf ..." suffix on Aangekondigd / In herdruk messages.
+        Vendor is still used for lifecycle 2's delay text and the in-store
+        pickup hint, but no longer for ETA dates.
+        """
         if total_stock > 0:
             if lifecycle in ('4', '9'):
                 return True, [{'msg': 'Laatste exemplaren!', 'class': 'vsi-last-copies'}]
@@ -72,18 +83,14 @@ class ProductTemplate(models.Model):
             ]
 
         delay_str = ''
-        eta_str = ''
         if vendor:
             delay = vendor.get('delay', 0)
             delay_str = '%d à %d dagen' % (delay + 1, delay + 2)
-            eta = vendor.get('x_studio_eta')
-            if eta:
-                eta_str = eta.strftime('%d/%m/%Y') if hasattr(eta, 'strftime') else str(eta)
 
         if lifecycle == '1':
             msg = 'Aangekondigd'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
+            if publish_date:
+                msg += '. Leverbaar vanaf ' + publish_date.strftime('%d-%m-%Y')
             return False, [{'msg': msg, 'class': 'vsi-announced'}]
 
         if lifecycle == '2':
@@ -94,8 +101,8 @@ class ProductTemplate(models.Model):
 
         if lifecycle == '3':
             msg = 'In herdruk'
-            if eta_str:
-                msg += '. Leverbaar vanaf ' + eta_str
+            if reprint_date:
+                msg += '. Leverbaar vanaf ' + reprint_date.strftime('%d-%m-%Y')
             return False, [{'msg': msg, 'class': 'vsi-reprint'}]
 
         if lifecycle in ('4', '9'):
