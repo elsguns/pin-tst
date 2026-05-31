@@ -15,8 +15,7 @@ class ProductTemplate(models.Model):
     avail_messages = fields.Json(compute='_compute_delivery_info')
 
     @api.depends_context('website_id')
-    @api.depends('x_studio_lifecycle', 'qty_available', 'seller_ids',
-                 'x_studio_publish_date', 'x_studio_reprint_date')
+    @api.depends('x_studio_lifecycle', 'qty_available', 'seller_ids')
     def _compute_delivery_info(self):
         website = self.env['website'].get_current_website()
         for p in self:
@@ -35,8 +34,6 @@ class ProductTemplate(models.Model):
             vendor = self._pick_best_vendor(vendor_infos)
             show, messages = self._buy_decision(
                 total_stock, own_stock, ps.x_studio_lifecycle, vendor,
-                getattr(ps, 'x_studio_publish_date', False),
-                getattr(ps, 'x_studio_reprint_date', False),
             )
             p.show_buy_button = show
             p.avail_messages = messages
@@ -61,15 +58,11 @@ class ProductTemplate(models.Model):
         return vendor_infos[0] if vendor_infos else None
 
     @api.model
-    def _buy_decision(self, total_stock, own_stock, lifecycle, vendor,
-                      publish_date, reprint_date):
+    def _buy_decision(self, total_stock, own_stock, lifecycle, vendor):
         """Returns (show_buy_button, [{'msg': ..., 'class': ...}, ...]).
 
-        publish_date / reprint_date come from product.template Studio fields
-        (x_studio_publish_date / x_studio_reprint_date) and drive the
-        "Leverbaar vanaf ..." suffix on Aangekondigd / In herdruk messages.
-        Vendor is still used for lifecycle 2's delay text and the in-store
-        pickup hint, but no longer for ETA dates.
+        Vendor is used for lifecycle 2's delay text and the in-store
+        pickup hint.
         """
         if total_stock > 0:
             if lifecycle in ('4', '9'):
@@ -89,10 +82,7 @@ class ProductTemplate(models.Model):
             delay_str = '%d à %d dagen' % (delay + 1, delay + 2)
 
         if lifecycle == '1':
-            msg = 'Aangekondigd'
-            if publish_date:
-                msg += '. Leverbaar vanaf ' + publish_date.strftime('%d-%m-%Y')
-            return False, [{'msg': msg, 'class': 'vsi-announced'}]
+            return False, [{'msg': 'Aangekondigd', 'class': 'vsi-announced'}]
 
         if lifecycle == '2':
             messages = [{'msg': 'Geleverd binnen ' + delay_str, 'class': 'vsi-available'}]
@@ -101,10 +91,7 @@ class ProductTemplate(models.Model):
             return True, messages
 
         if lifecycle == '3':
-            msg = 'In herdruk'
-            if reprint_date:
-                msg += '. Leverbaar vanaf ' + reprint_date.strftime('%d-%m-%Y')
-            return False, [{'msg': msg, 'class': 'vsi-reprint'}]
+            return False, [{'msg': 'In herdruk', 'class': 'vsi-reprint'}]
 
         if lifecycle in ('4', '9'):
             return False, [{'msg': 'Uitverkocht', 'class': 'vsi-sold-out'}]
