@@ -32,12 +32,12 @@
                         <span t-out="avail"/>
                     </p>
                     <h6 class="mb-2">Publish date</h6>
-                    <t t-set="pd" t-value="product.sudo().x_studio_publish_date"/>
+                    <t t-set="pd" t-value="getattr(product.sudo(), 'x_studio_publish_date', False)"/>
                     <p t-if="pd" class="mb-2">
                         <span t-out="pd.strftime('%d-%m-%Y')"/>
                     </p>
                     <h6 class="mb-2">Reprint date</h6>
-                    <t t-set="rd" t-value="product.sudo().x_studio_reprint_date"/>
+                    <t t-set="rd" t-value="getattr(product.sudo(), 'x_studio_reprint_date', False)"/>
                     <p t-if="rd" class="mb-2">
                         <span t-out="rd.strftime('%d-%m-%Y')"/>
                     </p>

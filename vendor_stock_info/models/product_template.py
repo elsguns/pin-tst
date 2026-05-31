@@ -35,7 +35,8 @@ class ProductTemplate(models.Model):
             vendor = self._pick_best_vendor(vendor_infos)
             show, messages = self._buy_decision(
                 total_stock, own_stock, ps.x_studio_lifecycle, vendor,
-                ps.x_studio_publish_date, ps.x_studio_reprint_date,
+                getattr(ps, 'x_studio_publish_date', False),
+                getattr(ps, 'x_studio_reprint_date', False),
             )
             p.show_buy_button = show
             p.avail_messages = messages
