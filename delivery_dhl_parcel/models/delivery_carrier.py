@@ -85,6 +85,7 @@ class DeliveryCarrier(models.Model):
     dhlparcel_flat_price = fields.Float("DHL flat price", default=0.0)
     dhlparcel_default_parcel_type = fields.Selection(
         [
+            ("ENVELOPE", "Envelop 50 tot 500 gram"),
             ("XSMALL", "Brievenbuspakket"),
             ("SMALL", "Pakket tot 10kg"),
             ("SMALL_MEDIUM", "Pakket tot 20kg"),
@@ -264,6 +265,14 @@ class DeliveryCarrier(models.Model):
         Parcel type: the line's chosen type if set, otherwise the carrier's
         fixed type, otherwise auto-derived from the piece weight.
         """
+        if (self.dhlparcel_default_parcel_type == "ENVELOPE"
+                and picking.partner_id.country_id
+                and picking.partner_id.country_id.code != "NL"):
+            raise UserError(_(
+                "De verzendmethode '%s' staat ingesteld op Envelop 50 tot 500 "
+                "gram, maar dat parceltype is bij DHL alleen beschikbaar voor "
+                "zendingen naar Nederland (bestemming: %s)."
+            ) % (self.name, picking.partner_id.country_id.name))
         default_weight = self.dhlparcel_default_weight or 1.0
 
         if picking.dhl_parcel_line_ids:
