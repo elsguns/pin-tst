@@ -7,6 +7,8 @@ import requests
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from .dhl_parcel_line import BUSINESS_TYPES, CONSUMER_TYPES
+
 _logger = logging.getLogger(__name__)
 
 API_BASE = "https://api-gw.dhlparcel.nl"
@@ -109,10 +111,14 @@ class DeliveryCarrier(models.Model):
             ("SMALL_MEDIUM", "Pakket tot 20kg"),
             ("MEDIUM", "Pakket tot 31kg"),
             ("PALLET", "Pallet tot 1000kg"),
+            ("MIX", "Gemengd (kies pakketten per zending)"),
         ],
         string="Parcel type",
         help="Het type van élk pakket dat met deze verzendmethode verzonden "
-             "wordt. Maak één verzendmethode per parceltype dat je aanbiedt.")
+             "wordt. Maak één verzendmethode per parceltype dat je aanbiedt. "
+             "Kies 'Gemengd' om verschillende types in één zending te kunnen "
+             "combineren — op de delivery verschijnt dan een DHL Parcels-tab "
+             "waar je per parcel een type kiest (zoals in het MyDHLParcel-portal).")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -133,6 +139,8 @@ class DeliveryCarrier(models.Model):
             if rec.delivery_type != "dhlparcel":
                 rec.dhlparcel_allowed_country_ids = all_countries
                 continue
+            # MIX has no carrier-level country restriction; the per-line
+            # ENVELOPE-vs-NL constraint covers that case.
             restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
                 rec.dhlparcel_parcel_type)
             if restricted:
@@ -323,31 +331,15 @@ class DeliveryCarrier(models.Model):
     def _dhlparcel_pieces(self, picking):
         """Build the DHL `pieces` list for a picking.
 
-        The carrier fixes the parcel type (one method per type). For the
-        count: if Put-in-Pack created packages, one piece per package;
-        otherwise we send a single piece with `quantity = dhl_parcel_count`
-        (default 1).
+        - MIX carrier: one piece per dhl.parcel.line on the delivery
+          (type/qty/weight from the line).
+        - Otherwise: type is fixed by the carrier; one piece per package
+          (Put-in-Pack), or a single piece with quantity=dhl_parcel_count.
         """
         ptype = self.dhlparcel_parcel_type
-        restriction = DHL_PARCEL_TYPE_RECIPIENT.get(ptype)
-        if restriction:
-            ptype_label = dict(self._fields[
-                "dhlparcel_parcel_type"].selection)[ptype]
-            is_company = picking.partner_id.is_company
-            if restriction == "consumer" and is_company:
-                raise UserError(_(
-                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
-                    "particuliere ontvangers. '%(partner)s' is een bedrijf — "
-                    "kies een DHL-verzendmethode voor bedrijven."
-                ) % {"ptype": ptype_label,
-                     "partner": picking.partner_id.display_name})
-            if restriction == "business" and not is_company:
-                raise UserError(_(
-                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
-                    "zakelijke ontvangers. '%(partner)s' is een particulier — "
-                    "kies een DHL-verzendmethode voor particulieren."
-                ) % {"ptype": ptype_label,
-                     "partner": picking.partner_id.display_name})
+        if ptype == "MIX":
+            return self._dhlparcel_pieces_from_lines(picking)
+        self._dhlparcel_check_recipient_compat(ptype, picking.partner_id)
         type_default = self._dhlparcel_default_weight_for_type(ptype)
         fallback_weight = (
             self.dhlparcel_default_weight or type_default or 1.0)
@@ -370,6 +362,53 @@ class DeliveryCarrier(models.Model):
         ) or fallback_weight
         return [{"parcelType": ptype, "quantity": qty,
                  "weight": per_piece_weight}]
+
+    def _dhlparcel_pieces_from_lines(self, picking):
+        if not picking.dhl_parcel_line_ids:
+            raise UserError(_(
+                "Voeg minstens één parcel toe in de DHL Parcels-tab op "
+                "deze delivery, of kies een DHL-verzendmethode met een "
+                "vast parceltype."))
+        fallback_weight = self.dhlparcel_default_weight or 1.0
+        pieces = []
+        for line in picking.dhl_parcel_line_ids:
+            ptype = line.parcel_type
+            if not ptype:
+                raise UserError(_(
+                    "Eén van de parcels in de DHL Parcels-tab heeft geen "
+                    "type. Vul het type aan vóór je valideert."))
+            self._dhlparcel_check_recipient_compat(ptype, picking.partner_id)
+            weight = (line.weight
+                      or self._dhlparcel_default_weight_for_type(ptype)
+                      or fallback_weight)
+            pieces.append({
+                "parcelType": ptype,
+                "quantity": line.quantity or 1,
+                "weight": weight,
+            })
+        return pieces
+
+    @staticmethod
+    def _dhlparcel_check_recipient_compat(parcel_type, partner):
+        """Raise UserError if the parcel type isn't sellable to this recipient
+        kind (consumer-only types on a company, business-only on an individual).
+        """
+        restriction = DHL_PARCEL_TYPE_RECIPIENT.get(parcel_type)
+        if not restriction:
+            return
+        type_label = dict(CONSUMER_TYPES + BUSINESS_TYPES).get(
+            parcel_type, parcel_type)
+        is_company = partner.is_company
+        if restriction == "consumer" and is_company:
+            raise UserError(_(
+                "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
+                "particuliere ontvangers. '%(partner)s' is een bedrijf."
+            ) % {"ptype": type_label, "partner": partner.display_name})
+        if restriction == "business" and not is_company:
+            raise UserError(_(
+                "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
+                "zakelijke ontvangers. '%(partner)s' is een particulier."
+            ) % {"ptype": type_label, "partner": partner.display_name})
 
     def _dhlparcel_build_payload(self, picking, shipment_id, pieces):
         """One shipment (multicollo): `pieces` already built by

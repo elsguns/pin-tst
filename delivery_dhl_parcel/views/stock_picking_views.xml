@@ -6,10 +6,36 @@
     <field name="model">stock.picking</field>
     <field name="inherit_id" ref="stock.view_picking_form"/>
     <field name="arch" type="xml">
+
       <xpath expr="//field[@name='carrier_id']" position="after">
         <field name="dhl_is_dhlparcel" invisible="1"/>
+        <field name="dhl_carrier_parcel_type" invisible="1"/>
+        <field name="dhl_partner_is_company" invisible="1"/>
         <field name="dhl_parcel_count"
-               invisible="not dhl_is_dhlparcel"/>
+               invisible="not dhl_is_dhlparcel or dhl_carrier_parcel_type == 'MIX'"/>
+      </xpath>
+
+      <xpath expr="//notebook" position="inside">
+        <page string="DHL Parcels" name="dhl_parcels"
+              invisible="dhl_carrier_parcel_type != 'MIX'">
+          <field name="dhl_parcel_line_ids">
+            <tree editable="bottom">
+              <field name="parcel_type_consumer"
+                     column_invisible="parent.dhl_partner_is_company"
+                     required="not parent.dhl_partner_is_company"/>
+              <field name="parcel_type_business"
+                     column_invisible="not parent.dhl_partner_is_company"
+                     required="parent.dhl_partner_is_company"/>
+              <field name="quantity"/>
+              <field name="weight"/>
+            </tree>
+          </field>
+          <p class="text-muted">
+            Eén regel per pakket, zoals in het My DHL Parcel-portal. De
+            type-lijst past zich aan aan de klant (particulier vs bedrijf).
+            Gewicht is optioneel; de carrier-default wordt gebruikt indien blanco.
+          </p>
+        </page>
       </xpath>
     </field>
   </record>

@@ -127,6 +127,12 @@ so the type is decided when you (or the customer) pick the method. Create one
 shipping method per type you want to offer. A regular parcel maxes at 31 kg;
 above that, use a Pallet method.
 
+For shipments that mix parcel types in one delivery (like the My DHL Parcel
+portal supports), create a method with **Parcel type = Gemengd (MIX)**. On
+deliveries using that method a **DHL Parcels** tab appears where you add one
+row per parcel, picking the type per row. The type list adapts to whether the
+recipient is a private person or a business.
+
 **Where do I set the shipping price? The Fixed Price field seems ignored.**
 The DHL Parcel API does not return live rates, so the price is set on the
 carrier itself. Choose **Pricing mode = Flat** and fill in **DHL flat price**,
