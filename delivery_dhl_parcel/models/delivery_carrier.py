@@ -85,11 +85,11 @@ class DeliveryCarrier(models.Model):
     dhlparcel_flat_price = fields.Float("DHL flat price", default=0.0)
     dhlparcel_default_parcel_type = fields.Selection(
         [
-            ("XSMALL", "XSmall — mailbox (max 2 kg)"),
-            ("SMALL", "Small — max 10 kg"),
-            ("SMALL_MEDIUM", "Small-Medium — 10-20 kg"),
-            ("MEDIUM", "Medium — 20-31 kg"),
-            ("PALLET", "Pallet — 31 kg and up"),
+            ("XSMALL", "Brievenbuspakket"),
+            ("SMALL", "Pakket tot 10kg"),
+            ("SMALL_MEDIUM", "Pakket tot 20kg"),
+            ("MEDIUM", "Pakket tot 31kg"),
+            ("PALLET", "Pallet tot 1000kg"),
         ],
         string="Parcel type",
         help="Leave empty to pick the type automatically from each parcel's "

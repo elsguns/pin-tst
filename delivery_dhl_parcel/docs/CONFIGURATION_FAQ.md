@@ -45,13 +45,16 @@ DHL technical contact when in doubt.
   the shipment" errors that mention permissions, this is the first thing to
   verify with DHL.
 
-**Optional, each gated by a separate DHL-side setting:**
+**Not available at all:**
+- **Live pricing via the API.** Confirmed with DHL: the gateway has no rating
+  endpoint, and the `price` field that appears in the `/parcel-types` schema is
+  meant for customs declarations (currency + declared value), not for tariff
+  lookup. Tariffs can be viewed in the My DHL Parcel portal (requires the Rate
+  Manager role on your account) but cannot be fetched programmatically. The
+  module therefore uses the carrier's configured price (flat amount or
+  weight-based rules) for shipping cost on the sale order.
 
-- **Live pricing in API responses.** The `/parcel-types` endpoint has a `price`
-  field in its schema, but it is only returned when DHL has activated pricing
-  visibility on the API key. Without it, the module uses the carrier's
-  configured price (flat amount or weight rules) instead of fetching live
-  rates. Ask DHL whether pricing visibility can be enabled on your key.
+**Optional, each gated by a separate DHL-side setting:**
 
 - **Cancellation via API** (`/interventions/cancel`). The exact endpoint and
   request body must be obtained from your DHL tech contact, and the API key
@@ -72,8 +75,6 @@ DHL technical contact when in doubt.
 
 **How the module behaves when a permission is missing:**
 - No `label-service.B2X`: a clear UserError points to credentials/permissions.
-- No live pricing: the configured flat/weight-rule price is used silently. No
-  failure.
 - No cancel permission: the cancel action posts a clear chatter note ("DHL
   cancellation API not integrated yet, please cancel in the portal"). No
   silent failure.
