@@ -14,6 +14,15 @@
         </attribute>
       </xpath>
 
+      <!-- Filter Countries dropdown to DHL-supported destinations
+           (and further narrow it when a restricted default parcel type is set). -->
+      <xpath expr="//field[@name='country_ids']" position="before">
+        <field name="dhlparcel_allowed_country_ids" invisible="1"/>
+      </xpath>
+      <xpath expr="//field[@name='country_ids']" position="attributes">
+        <attribute name="domain">[('id', 'in', dhlparcel_allowed_country_ids)]</attribute>
+      </xpath>
+
       <!-- DHL Parcel configuration page -->
       <xpath expr="//notebook" position="inside">
         <page string="DHL Parcel" name="dhlparcel"

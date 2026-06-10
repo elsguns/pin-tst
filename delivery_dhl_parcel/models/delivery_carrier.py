@@ -4,8 +4,8 @@ import uuid
 
 import requests
 
-from odoo import _, fields, models
-from odoo.exceptions import UserError
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -16,6 +16,18 @@ LABEL_PATH = "/labels/%s"
 TIMEOUT = 30
 # Public consumer track & trace page (tracker + postcode). Provisional URL.
 TRACK_URL = "https://www.dhlparcel.nl/nl/consument/traceer-uw-zending?tt=%s"
+
+# Countries DHL Parcel BE/NL/LU can deliver to (per the 2026-01-01 rate card).
+DHL_COUNTRY_CODES = [
+    "AT", "BE", "BG", "CH", "CZ", "DE", "DK", "EE", "ES", "FI",
+    "FR", "GB", "GR", "HR", "HU", "IE", "IT", "LI", "LT", "LU",
+    "LV", "MC", "NL", "NO", "PL", "PT", "RO", "SE", "SI", "SK", "SM",
+]
+# Per parcel-type country restrictions; absent key = all DHL_COUNTRY_CODES.
+DHL_PARCEL_TYPE_COUNTRIES = {
+    "ENVELOPE": ["NL"],
+    "XSMALL": ["BE", "NL"],
+}
 
 
 def _split_number(token):
@@ -100,6 +112,67 @@ class DeliveryCarrier(models.Model):
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
              "set). DHL refuses a 0 kg shipment, so this value is sent instead.")
+
+    # Computed allowlist driving the Countries dropdown filter.
+    dhlparcel_allowed_country_ids = fields.Many2many(
+        "res.country",
+        compute="_compute_dhlparcel_allowed_country_ids",
+    )
+
+    @api.depends("delivery_type", "dhlparcel_default_parcel_type")
+    def _compute_dhlparcel_allowed_country_ids(self):
+        Country = self.env["res.country"]
+        all_countries = Country.search([])
+        dhl_countries = Country.search([("code", "in", DHL_COUNTRY_CODES)])
+        for rec in self:
+            if rec.delivery_type != "dhlparcel":
+                rec.dhlparcel_allowed_country_ids = all_countries
+                continue
+            restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
+                rec.dhlparcel_default_parcel_type)
+            if restricted:
+                rec.dhlparcel_allowed_country_ids = Country.search(
+                    [("code", "in", restricted)])
+            else:
+                rec.dhlparcel_allowed_country_ids = dhl_countries
+
+    @api.constrains(
+        "delivery_type", "country_ids", "dhlparcel_default_parcel_type")
+    def _check_dhlparcel_countries(self):
+        Country = self.env["res.country"]
+        dhl_codes = set(DHL_COUNTRY_CODES)
+        for rec in self:
+            if rec.delivery_type != "dhlparcel":
+                continue
+            unsupported = rec.country_ids.filtered(
+                lambda c: c.code not in dhl_codes)
+            if unsupported:
+                raise ValidationError(_(
+                    "DHL Parcel verzendt niet naar de volgende landen: %s.\n"
+                    "Verwijder deze uit het Countries-veld."
+                ) % ", ".join(unsupported.mapped("name")))
+            restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
+                rec.dhlparcel_default_parcel_type)
+            if not restricted:
+                continue
+            wrong = rec.country_ids.filtered(
+                lambda c: c.code not in restricted)
+            if wrong:
+                ptype_label = dict(rec._fields[
+                    "dhlparcel_default_parcel_type"].selection
+                )[rec.dhlparcel_default_parcel_type]
+                allowed_names = Country.search(
+                    [("code", "in", restricted)]).mapped("name")
+                raise ValidationError(_(
+                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
+                    "zendingen naar %(allowed)s.\n"
+                    "Verwijder deze landen uit het Countries-veld, of kies "
+                    "een ander parceltype: %(wrong)s"
+                ) % {
+                    "ptype": ptype_label,
+                    "allowed": ", ".join(allowed_names),
+                    "wrong": ", ".join(wrong.mapped("name")),
+                })
 
     # ------------------------------------------------------------------
     # API plumbing
