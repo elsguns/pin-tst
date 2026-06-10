@@ -6,33 +6,10 @@
     <field name="model">stock.picking</field>
     <field name="inherit_id" ref="stock.view_picking_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//notebook" position="before">
+      <xpath expr="//field[@name='carrier_id']" position="after">
         <field name="dhl_is_dhlparcel" invisible="1"/>
-        <field name="dhl_partner_is_company" invisible="1"/>
-      </xpath>
-      <xpath expr="//notebook" position="inside">
-        <page string="DHL Parcels" name="dhl_parcels"
-              invisible="not dhl_is_dhlparcel">
-          <field name="dhl_parcel_line_ids">
-            <tree editable="bottom">
-              <field name="parcel_type_consumer"
-                     column_invisible="parent.dhl_partner_is_company"
-                     required="not parent.dhl_partner_is_company"/>
-              <field name="parcel_type_business"
-                     column_invisible="not parent.dhl_partner_is_company"
-                     required="parent.dhl_partner_is_company"/>
-              <field name="quantity"/>
-              <field name="weight"/>
-            </tree>
-          </field>
-          <p class="text-muted">
-            Add one row per parcel, like the My DHL Parcel portal. The parcel
-            type list adapts to whether the customer is a person or a company.
-            Leave this table empty to fall back to the delivery's packages, or
-            to a single auto parcel. Weight is optional; the carrier's default
-            weight is used when blank.
-          </p>
-        </page>
+        <field name="dhl_parcel_count"
+               invisible="not dhl_is_dhlparcel"/>
       </xpath>
     </field>
   </record>

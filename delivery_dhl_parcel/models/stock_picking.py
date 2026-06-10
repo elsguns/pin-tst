@@ -4,14 +4,13 @@ from odoo import api, fields, models
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
-    dhl_parcel_line_ids = fields.One2many(
-        "dhl.parcel.line", "picking_id", string="DHL Parcels")
     dhl_is_dhlparcel = fields.Boolean(
         compute="_compute_dhl_is_dhlparcel")
-    dhl_partner_is_company = fields.Boolean(
-        related="partner_id.is_company",
-        help="Drives the recipient-aware parcel-type columns on the "
-             "DHL Parcels lines.")
+    dhl_parcel_count = fields.Integer(
+        string="Aantal pakketten", default=1,
+        help="Aantal identieke pakketten in deze zending (multicollo). "
+             "Genegeerd zodra je Put in Pack gebruikt: dan bepalen de "
+             "aangemaakte packages het aantal pieces.")
 
     @api.depends("carrier_id", "carrier_id.delivery_type")
     def _compute_dhl_is_dhlparcel(self):

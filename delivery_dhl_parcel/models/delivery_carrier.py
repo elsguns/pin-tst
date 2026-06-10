@@ -95,7 +95,7 @@ class DeliveryCarrier(models.Model):
              "price is set here: a flat amount, or the weight/price rules on "
              "the Pricing tab.")
     dhlparcel_flat_price = fields.Float("DHL flat price", default=0.0)
-    dhlparcel_default_parcel_type = fields.Selection(
+    dhlparcel_parcel_type = fields.Selection(
         [
             ("ENVELOPE", "Envelop 50 tot 500 gram"),
             ("XSMALL", "Brievenbuspakket"),
@@ -105,9 +105,8 @@ class DeliveryCarrier(models.Model):
             ("PALLET", "Pallet tot 1000kg"),
         ],
         string="Parcel type",
-        help="Leave empty to pick the type automatically from each parcel's "
-             "weight (the usual choice). Set a value to force that type for "
-             "every parcel, e.g. a fixed B2C webshop method.")
+        help="Het type van élk pakket dat met deze verzendmethode verzonden "
+             "wordt. Maak één verzendmethode per parceltype dat je aanbiedt.")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -119,7 +118,7 @@ class DeliveryCarrier(models.Model):
         compute="_compute_dhlparcel_allowed_country_ids",
     )
 
-    @api.depends("delivery_type", "dhlparcel_default_parcel_type")
+    @api.depends("delivery_type", "dhlparcel_parcel_type")
     def _compute_dhlparcel_allowed_country_ids(self):
         Country = self.env["res.country"]
         all_countries = Country.search([])
@@ -129,7 +128,7 @@ class DeliveryCarrier(models.Model):
                 rec.dhlparcel_allowed_country_ids = all_countries
                 continue
             restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
-                rec.dhlparcel_default_parcel_type)
+                rec.dhlparcel_parcel_type)
             if restricted:
                 rec.dhlparcel_allowed_country_ids = Country.search(
                     [("code", "in", restricted)])
@@ -137,13 +136,17 @@ class DeliveryCarrier(models.Model):
                 rec.dhlparcel_allowed_country_ids = dhl_countries
 
     @api.constrains(
-        "delivery_type", "country_ids", "dhlparcel_default_parcel_type")
+        "delivery_type", "country_ids", "dhlparcel_parcel_type")
     def _check_dhlparcel_countries(self):
         Country = self.env["res.country"]
         dhl_codes = set(DHL_COUNTRY_CODES)
         for rec in self:
             if rec.delivery_type != "dhlparcel":
                 continue
+            if not rec.dhlparcel_parcel_type:
+                raise ValidationError(_(
+                    "Kies een Parcel type op de DHL-verzendmethode '%s'."
+                ) % rec.name)
             unsupported = rec.country_ids.filtered(
                 lambda c: c.code not in dhl_codes)
             if unsupported:
@@ -152,15 +155,15 @@ class DeliveryCarrier(models.Model):
                     "Verwijder deze uit het Countries-veld."
                 ) % ", ".join(unsupported.mapped("name")))
             restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
-                rec.dhlparcel_default_parcel_type)
+                rec.dhlparcel_parcel_type)
             if not restricted:
                 continue
             wrong = rec.country_ids.filtered(
                 lambda c: c.code not in restricted)
             if wrong:
                 ptype_label = dict(rec._fields[
-                    "dhlparcel_default_parcel_type"].selection
-                )[rec.dhlparcel_default_parcel_type]
+                    "dhlparcel_parcel_type"].selection
+                )[rec.dhlparcel_parcel_type]
                 allowed_names = Country.search(
                     [("code", "in", restricted)]).mapped("name")
                 raise ValidationError(_(
@@ -298,27 +301,10 @@ class DeliveryCarrier(models.Model):
         }
 
     @staticmethod
-    def _dhlparcel_parcel_type_for_weight(weight):
-        """Map a parcel weight (kg) to a DHL BE parcel-type tier.
-
-        Tiers from GET /parcel-types (BE business): SMALL <=10, SMALL_MEDIUM
-        <=20, MEDIUM <=31, PALLET above. XSMALL (mailbox, <=2 kg + tiny
-        dimensions) is never auto-selected; it must be chosen explicitly.
-        """
-        w = weight or 0
-        if w <= 10:
-            return "SMALL"
-        if w <= 20:
-            return "SMALL_MEDIUM"
-        if w <= 31:
-            return "MEDIUM"
-        return "PALLET"
-
-    @staticmethod
     def _dhlparcel_default_weight_for_type(parcel_type):
         """A representative in-tier weight per parcel type, used when the
-        operator picks a type but leaves the weight blank (so the parcel is
-        not declared as 1 kg while typed e.g. MEDIUM)."""
+        operator leaves both the picking weight and the carrier default at 0
+        (so a Medium parcel is not declared as 0 kg)."""
         return {
             "ENVELOPE": 0.3,
             "XSMALL": 1.0,
@@ -329,52 +315,36 @@ class DeliveryCarrier(models.Model):
         }.get(parcel_type, 0.0)
 
     def _dhlparcel_pieces(self, picking):
-        """Build the DHL `pieces` list for a picking, from the best source:
+        """Build the DHL `pieces` list for a picking.
 
-        1. Explicit DHL parcel lines (the dashboard-style table) if present;
-        2. else native packages (one piece per package);
-        3. else a single auto piece at the default weight.
-
-        Parcel type: the line's chosen type if set, otherwise the carrier's
-        fixed type, otherwise auto-derived from the piece weight.
+        The carrier fixes the parcel type (one method per type). For the
+        count: if Put-in-Pack created packages, one piece per package;
+        otherwise we send a single piece with `quantity = dhl_parcel_count`
+        (default 1).
         """
-        if (self.dhlparcel_default_parcel_type == "ENVELOPE"
-                and picking.partner_id.country_id
-                and picking.partner_id.country_id.code != "NL"):
-            raise UserError(_(
-                "De verzendmethode '%s' staat ingesteld op Envelop 50 tot 500 "
-                "gram, maar dat parceltype is bij DHL alleen beschikbaar voor "
-                "zendingen naar Nederland (bestemming: %s)."
-            ) % (self.name, picking.partner_id.country_id.name))
-        default_weight = self.dhlparcel_default_weight or 1.0
-
-        if picking.dhl_parcel_line_ids:
-            pieces = []
-            for line in picking.dhl_parcel_line_ids:
-                ptype = (line.parcel_type or self.dhlparcel_default_parcel_type
-                         or self._dhlparcel_parcel_type_for_weight(
-                             line.weight or default_weight))
-                weight = (line.weight
-                          or self._dhlparcel_default_weight_for_type(ptype)
-                          or default_weight)
-                pieces.append({"parcelType": ptype,
-                               "quantity": line.quantity or 1,
-                               "weight": weight})
-            return pieces
+        ptype = self.dhlparcel_parcel_type
+        type_default = self._dhlparcel_default_weight_for_type(ptype)
+        fallback_weight = (
+            self.dhlparcel_default_weight or type_default or 1.0)
 
         try:
             packages = self._get_packages_from_picking(
                 picking, self.env["stock.package.type"])
-            weights = [pkg.weight or default_weight for pkg in packages]
         except UserError:
-            weights = [default_weight]
-        pieces = []
-        for w in weights:
-            w = w or default_weight
-            ptype = (self.dhlparcel_default_parcel_type
-                     or self._dhlparcel_parcel_type_for_weight(w))
-            pieces.append({"parcelType": ptype, "quantity": 1, "weight": w})
-        return pieces
+            packages = []
+        if packages:
+            return [
+                {"parcelType": ptype, "quantity": 1,
+                 "weight": pkg.weight or fallback_weight}
+                for pkg in packages
+            ]
+
+        qty = max(int(picking.dhl_parcel_count or 1), 1)
+        per_piece_weight = (
+            (picking.weight / qty) if (picking.weight and qty) else 0
+        ) or fallback_weight
+        return [{"parcelType": ptype, "quantity": qty,
+                 "weight": per_piece_weight}]
 
     def _dhlparcel_build_payload(self, picking, shipment_id, pieces):
         """One shipment (multicollo): `pieces` already built by

@@ -9,7 +9,12 @@
         - Shipping label is created when the delivery (stock.picking) is
           validated; the label PDF is attached to the picking and the tracker
           stored on the carrier_tracking_ref.
-        - One shipment per package (native Odoo packages) for split deliveries.
+        - One shipping method per DHL parcel type (Brievenbuspakket,
+          Pakket tot 10kg, ..., Pallet tot 1000kg). The type is fixed by
+          the method; create one method per type you offer.
+        - Multicollo via either the "Aantal pakketten" field on the
+          delivery (one piece type, count N) or native Put-in-Pack (one
+          piece per package, all of the carrier's type).
         - Customer pricing is flat or weight-rule based (the DHL Parcel API
           does not expose live rates).
 
@@ -19,7 +24,7 @@
     'website': "https://bartvenken.be",
     'license': 'LGPL-3',
     'category': 'Inventory/Delivery',
-    'version': '17.0.0.1.0',
+    'version': '17.0.0.2.0',
     'depends': ['stock_delivery'],
     'data': [
         'security/ir.model.access.csv',

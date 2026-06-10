@@ -12,24 +12,33 @@ meant to grow into the customer-facing FAQ.
   access enabled.
 - API credentials: a **User ID** and an **API Key**, plus the short **Account
   ID** (customer number). See "Where do I get the API credentials?" below.
-- To ship a delivery as several parcels (multicollo), enable the **Packages**
-  feature: Inventory > Configuration > Settings > Operations > Packages. Without
-  it there is no "Put in Pack" button and every delivery is a single parcel.
+- To ship a delivery as several parcels (multicollo), either use the
+  **Aantal pakketten** field on the delivery (simplest, one DHL piece with
+  quantity=N) or enable the **Packages** feature (Inventory > Configuration
+  > Settings > Operations > Packages) and use **Put in Pack** to split items
+  per box. With Put in Pack, each package becomes a separate piece.
 
 ## Setting up the shipping method
+
+Create **one shipping method per parcel type** you want to offer (Brievenbus-
+pakket, Pakket tot 10kg, Pakket tot 20kg, ...). Each method represents one
+fixed DHL parcel type with its own pricing.
 
 1. Install the module **DHL Parcel Delivery Carrier**.
 2. Go to **Inventory > Configuration > Shipping Methods** and create a new one.
 3. Set **Provider** to **DHL Parcel (Benelux)**. A **DHL Parcel** tab appears.
 4. On that tab, fill in:
    - **Credentials**: User ID, API Key, Account ID.
-   - **Default parcel type** (usually SMALL).
+   - **Parcel type** (required): the DHL type for all shipments under this
+     method, e.g. Brievenbuspakket or Pakket tot 10kg.
    - **Default weight (kg)**: the weight sent when a parcel has none (see FAQ).
    - **Pricing mode**: Flat (with a flat price) or Weight-based rules.
 5. Leave **Integration Level** on **Get Rate and Create Shipment**. This is
    required for a label to be created when a delivery is validated.
-6. **Countries**: scope the method to the destinations the account supports
-   (currently Benelux, see "Can I ship outside Benelux?").
+6. **Countries**: pick the destinations this method covers. The list is
+   automatically restricted to the 31 countries DHL Parcel delivers to, and
+   further narrowed by the chosen parcel type (ENVELOPE: NL only;
+   Brievenbuspakket: BE+NL only).
 7. Optional: **Website**. Bind the method to one website for webshop checkout,
    or leave it empty to make it available everywhere.
 
@@ -112,13 +121,11 @@ which is sent when the parcel weight is 0. Note that an inaccurate declared
 weight can lead DHL to re-weigh the parcel and adjust the invoice.
 
 **How is the parcel type chosen?**
-By default the module picks it automatically from each parcel's weight, using
-the DHL Belgium tiers: up to 10 kg = Small, 10-20 kg = Small-Medium, 20-31 kg =
-Medium, above 31 kg = Pallet. (XSmall / mailbox is never auto-selected because
-it also has a tiny size limit; choose it explicitly if you need it.) To force a
-single type for every parcel, set the Parcel type field on the carrier; leave it
-empty for automatic selection. A regular parcel maxes at 31 kg, so a heavier
-shipment must be packed into several boxes (each box becomes one piece).
+The parcel type is fixed by the shipping method. Each method represents one
+DHL parcel type (Brievenbuspakket / Pakket tot 10kg / ... / Pallet tot 1000kg),
+so the type is decided when you (or the customer) pick the method. Create one
+shipping method per type you want to offer. A regular parcel maxes at 31 kg;
+above that, use a Pallet method.
 
 **Where do I set the shipping price? The Fixed Price field seems ignored.**
 The DHL Parcel API does not return live rates, so the price is set on the
@@ -155,15 +162,12 @@ Odoo creates a separate delivery per warehouse, and each becomes its own DHL
 shipment with its own correct sender address. A single label can carry only one
 sender, so different warehouses always mean different shipments.
 
-**How do I quickly declare several parcels (the portal-style way)?**
-On a DHL delivery there is a **DHL Parcels** tab. Add one row per parcel, just
-like the My DHL Parcel portal: pick the parcel type, set the quantity, and
-optionally a weight (if left blank, a weight matching the chosen type is sent,
-so a "Parcel up to 31 kg" is not declared as 1 kg). The parcel-type list adapts to the customer (a person sees
-envelope / mailbox / parcel options; a company sees parcel / pallet options).
-The shipment is created with exactly those parcels. This avoids the Put-in-Pack
-splitting work; it is the fastest way to ship one order as several boxes. Leave
-the table empty to fall back to the delivery's packages, or to a single parcel.
+**How do I quickly declare several parcels?**
+On a DHL delivery there is an **Aantal pakketten** field. Set it to the number
+of identical parcels you want to ship; the module sends one DHL shipment with
+that many pieces, all of the carrier's parcel type. DHL returns one tracker
+per piece and one combined multi-page label PDF. No need to use Put in Pack
+when all pieces are the same type.
 
 **I don't see a "Put in Pack" button on the delivery.**
 Enable the Packages feature: Inventory > Configuration > Settings > Operations >
@@ -176,19 +180,17 @@ remaining lines and Put in Pack again. Each Put in Pack bundles whatever
 currently has a quantity and is not yet packed.
 
 **The Package Type dropdown is empty.**
-That is fine; package type is optional. The module decides the DHL parcel type
-from each package's weight, not from the package type, so you can leave it empty.
-(Defining stock.package.type records is only needed if you want to manage box
-dimensions explicitly.)
+That is fine; package type is not used by this module. The DHL parcel type is
+fixed by the shipping method.
 
-**An order is packed in several boxes.**
-Put the items into packages on the delivery (native "Put in Pack"). The module
-then creates **one DHL shipment with one piece per package** (multicollo): each
-piece gets its own tracking code, and all labels come back in a single
-multi-page PDF attached to the delivery. One delivery is one shipment in the DHL
-dashboard, with N parcels under it. A parcel is only split into multiple pieces
-when you actually pack it into multiple boxes; a single light order stays one
-piece.
+**An order is packed in several boxes (with different items per box).**
+Use native **Put in Pack**: split the quantities so the items for box 1 are
+"Done" first, click Put in Pack, then set the remaining quantities and Put in
+Pack again. Each package becomes one piece in the DHL shipment, all of the
+carrier's parcel type. Each piece gets its own tracking code, and all labels
+come back in one multi-page PDF attached to the delivery. When you don't care
+which items go in which box, use the **Aantal pakketten** field instead
+(simpler — one click).
 
 **Which destinations can I ship to?**
 Benelux works now: BE, NL and LU are all handled by the default flow. DHL
@@ -205,7 +207,7 @@ declaration. It also depends on your DHL contract including those products.
 No. DHL's parcel-type catalog is the same regardless of recipient; the
 business-versus-consumer difference is handled by the product DHL selects
 automatically (a home-delivery product for consumers, a business product
-otherwise). So you do not configure separate parcel types per recipient type.
+otherwise).
 
 **How do I cancel a shipment?**
 For now, in the DHL portal. The module's cancel action clears the local tracking

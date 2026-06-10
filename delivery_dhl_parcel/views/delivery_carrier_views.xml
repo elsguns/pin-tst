@@ -34,7 +34,8 @@
               <field name="dhlparcel_account_id"/>
             </group>
             <group string="Shipment">
-              <field name="dhlparcel_default_parcel_type"/>
+              <field name="dhlparcel_parcel_type"
+                     required="delivery_type == 'dhlparcel'"/>
               <field name="dhlparcel_default_weight"/>
               <field name="dhlparcel_pricing_mode"/>
               <field name="dhlparcel_flat_price"
