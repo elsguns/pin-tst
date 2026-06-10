@@ -28,6 +28,12 @@ DHL_PARCEL_TYPE_COUNTRIES = {
     "ENVELOPE": ["NL"],
     "XSMALL": ["BE", "NL"],
 }
+# Per parcel-type recipient restriction; absent key = both consumer and business.
+DHL_PARCEL_TYPE_RECIPIENT = {
+    "ENVELOPE": "consumer",
+    "XSMALL": "consumer",
+    "PALLET": "business",
+}
 
 
 def _split_number(token):
@@ -323,6 +329,25 @@ class DeliveryCarrier(models.Model):
         (default 1).
         """
         ptype = self.dhlparcel_parcel_type
+        restriction = DHL_PARCEL_TYPE_RECIPIENT.get(ptype)
+        if restriction:
+            ptype_label = dict(self._fields[
+                "dhlparcel_parcel_type"].selection)[ptype]
+            is_company = picking.partner_id.is_company
+            if restriction == "consumer" and is_company:
+                raise UserError(_(
+                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
+                    "particuliere ontvangers. '%(partner)s' is een bedrijf — "
+                    "kies een DHL-verzendmethode voor bedrijven."
+                ) % {"ptype": ptype_label,
+                     "partner": picking.partner_id.display_name})
+            if restriction == "business" and not is_company:
+                raise UserError(_(
+                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
+                    "zakelijke ontvangers. '%(partner)s' is een particulier — "
+                    "kies een DHL-verzendmethode voor particulieren."
+                ) % {"ptype": ptype_label,
+                     "partner": picking.partner_id.display_name})
         type_default = self._dhlparcel_default_weight_for_type(ptype)
         fallback_weight = (
             self.dhlparcel_default_weight or type_default or 1.0)
