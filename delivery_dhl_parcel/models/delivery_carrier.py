@@ -456,9 +456,10 @@ class DeliveryCarrier(models.Model):
     # ------------------------------------------------------------------
     def dhlparcel_rate_shipment(self, order):
         self.ensure_one()
+        warning = False
         try:
             if self.dhlparcel_parcel_type == "MIX":
-                price = self._dhlparcel_rate_mix(order)
+                price, warning = self._dhlparcel_rate_mix(order)
             elif self.dhlparcel_pricing_mode == "rule":
                 price = self._get_price_available(order)
             else:
@@ -467,24 +468,32 @@ class DeliveryCarrier(models.Model):
             return {"success": False, "price": 0.0,
                     "error_message": str(exc), "warning_message": False}
         return {"success": True, "price": price,
-                "error_message": False, "warning_message": False}
+                "error_message": False, "warning_message": warning}
 
     def _dhlparcel_rate_mix(self, order):
         """Price for a MIX carrier = sum(qty * per-type tariff) over the
-        parcel lines on this order's pickings. Returns 0 when there are no
-        lines yet (e.g. Add Shipping is run before the picking is filled in)
-        — re-run Add Shipping after filling in the DHL Parcels tab to
-        refresh the line."""
+        parcel lines on this order's pickings. Returns (price, warning).
+        When no parcel lines are defined yet (e.g. Add Shipping is run
+        before the picking is filled in) the price is 0 and a warning is
+        returned so the Add Shipping wizard surfaces it to the user."""
         tariff_by_type = {
             t.parcel_type: t.price for t in self.dhlparcel_tariff_ids}
         pickings = order.picking_ids.filtered(
             lambda p: p.dhl_parcel_line_ids)
+        if not pickings:
+            warning = _(
+                "Er zijn nog geen parcels gedefinieerd in de DHL Parcels-"
+                "tab van een delivery voor dit order — de verzendkost "
+                "staat momenteel op 0,00.\n"
+                "Doe Add Shipping opnieuw nadat het magazijn de DHL "
+                "Parcels-tab heeft ingevuld om de juiste prijs te krijgen.")
+            return 0.0, warning
         total = 0.0
         for picking in pickings:
             for line in picking.dhl_parcel_line_ids:
                 rate = tariff_by_type.get(line.parcel_type, 0.0)
                 total += (line.quantity or 1) * rate
-        return total
+        return total, False
 
     def dhlparcel_send_shipping(self, pickings):
         res = []
