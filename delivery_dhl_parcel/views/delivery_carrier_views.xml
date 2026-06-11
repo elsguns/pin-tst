@@ -43,23 +43,24 @@
                      invisible="dhlparcel_pricing_mode != 'flat' or dhlparcel_parcel_type == 'MIX'"/>
             </group>
           </group>
-          <group string="Tarieven per type"
+          <separator string="Tarieven per type"
+                     invisible="dhlparcel_parcel_type != 'MIX'"/>
+          <field name="dhlparcel_tariff_ids"
                  invisible="dhlparcel_parcel_type != 'MIX'">
-            <field name="dhlparcel_tariff_ids" nolabel="1">
-              <tree editable="bottom">
-                <field name="parcel_type" required="1"/>
-                <field name="price" required="1"/>
-              </tree>
-            </field>
-            <p class="text-muted" colspan="2">
-              Vul per parceltype het tarief in dat aan de klant wordt
-              aangerekend. Bij MIX wordt de verzendkost berekend als
-              <code>som(aantal × tarief)</code> over alle parcels op de
-              delivery. Doe <b>Add Shipping</b> opnieuw op het order nadat
-              je de DHL Parcels-tab hebt ingevuld, om de prijs op het order
-              te verversen.
-            </p>
-          </group>
+            <tree editable="bottom">
+              <field name="parcel_type" required="1"/>
+              <field name="price" required="1"/>
+            </tree>
+          </field>
+          <p class="text-muted"
+             invisible="dhlparcel_parcel_type != 'MIX'">
+            Vul per parceltype het tarief in dat aan de klant wordt
+            aangerekend. Bij MIX wordt de verzendkost berekend als
+            <code>som(aantal × tarief)</code> over alle parcels op de
+            delivery. Doe <b>Add Shipping</b> opnieuw op het order nadat
+            je de DHL Parcels-tab hebt ingevuld, om de prijs op het order
+            te verversen.
+          </p>
           <div class="text-muted">
             <p>The DHL Parcel API does not return live shipping rates, so the
                customer price is set here. Choose <b>Flat price</b> for a fixed
