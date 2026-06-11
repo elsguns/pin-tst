@@ -8,6 +8,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from .dhl_parcel_line import BUSINESS_TYPES, CONSUMER_TYPES
+from .dhl_parcel_tariff import ALL_PARCEL_TYPES
 
 _logger = logging.getLogger(__name__)
 
@@ -129,6 +130,20 @@ class DeliveryCarrier(models.Model):
         "res.country",
         compute="_compute_dhlparcel_allowed_country_ids",
     )
+
+    # Per-type tariff for the MIX carrier. The cost of a mixed shipment is
+    # sum(qty * tariff_for_type) over the DHL parcel lines on the picking.
+    dhlparcel_tariff_ids = fields.One2many(
+        "dhl.parcel.tariff", "carrier_id", string="Tarieven per type")
+
+    @api.onchange("dhlparcel_parcel_type")
+    def _onchange_dhlparcel_parcel_type_seed_tariffs(self):
+        if (self.dhlparcel_parcel_type == "MIX"
+                and not self.dhlparcel_tariff_ids):
+            self.dhlparcel_tariff_ids = [
+                (0, 0, {"parcel_type": code, "price": 0.0})
+                for code, _label in ALL_PARCEL_TYPES
+            ]
 
     @api.depends("delivery_type", "dhlparcel_parcel_type")
     def _compute_dhlparcel_allowed_country_ids(self):
@@ -442,7 +457,9 @@ class DeliveryCarrier(models.Model):
     def dhlparcel_rate_shipment(self, order):
         self.ensure_one()
         try:
-            if self.dhlparcel_pricing_mode == "rule":
+            if self.dhlparcel_parcel_type == "MIX":
+                price = self._dhlparcel_rate_mix(order)
+            elif self.dhlparcel_pricing_mode == "rule":
                 price = self._get_price_available(order)
             else:
                 price = self.dhlparcel_flat_price
@@ -451,6 +468,23 @@ class DeliveryCarrier(models.Model):
                     "error_message": str(exc), "warning_message": False}
         return {"success": True, "price": price,
                 "error_message": False, "warning_message": False}
+
+    def _dhlparcel_rate_mix(self, order):
+        """Price for a MIX carrier = sum(qty * per-type tariff) over the
+        parcel lines on this order's pickings. Returns 0 when there are no
+        lines yet (e.g. Add Shipping is run before the picking is filled in)
+        — re-run Add Shipping after filling in the DHL Parcels tab to
+        refresh the line."""
+        tariff_by_type = {
+            t.parcel_type: t.price for t in self.dhlparcel_tariff_ids}
+        pickings = order.picking_ids.filtered(
+            lambda p: p.dhl_parcel_line_ids)
+        total = 0.0
+        for picking in pickings:
+            for line in picking.dhl_parcel_line_ids:
+                rate = tariff_by_type.get(line.parcel_type, 0.0)
+                total += (line.quantity or 1) * rate
+        return total
 
     def dhlparcel_send_shipping(self, pickings):
         res = []
