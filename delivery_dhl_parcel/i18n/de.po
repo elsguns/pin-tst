@@ -1,0 +1,312 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* delivery_dhl_parcel
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-12 00:00+0000\n"
+"PO-Revision-Date: 2026-06-12 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__delivery_type__dhlparcel
+msgid "DHL Parcel (Benelux)"
+msgstr "DHL Parcel (Benelux)"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__envelope
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_consumer__envelope
+msgid "Envelop 50 tot 500 gram"
+msgstr "Umschlag 50 bis 500 g"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__xsmall
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_consumer__xsmall
+msgid "Brievenbuspakket"
+msgstr "Briefkastenpaket"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__small
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_consumer__small
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_business__small
+msgid "Pakket tot 10kg"
+msgstr "Paket bis 10 kg"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__small_medium
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_consumer__small_medium
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_business__small_medium
+msgid "Pakket tot 20kg"
+msgstr "Paket bis 20 kg"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__medium
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_consumer__medium
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_business__medium
+msgid "Pakket tot 31kg"
+msgstr "Paket bis 31 kg"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__pallet
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__dhl_parcel_line__parcel_type_business__pallet
+msgid "Pallet tot 1000kg"
+msgstr "Palette bis 1000 kg"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_parcel_type__mix
+msgid "Gemengd (kies pakketten per zending)"
+msgstr "Gemischt (Pakete pro Sendung wählen)"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_pricing_mode__flat
+msgid "Flat price"
+msgstr "Pauschalpreis"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_pricing_mode__rule
+msgid "Weight-based rules"
+msgstr "Gewichtsbasierte Regeln"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_user_id
+msgid "DHL User ID"
+msgstr "DHL Benutzer-ID"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_api_key
+msgid "DHL API Key"
+msgstr "DHL API-Schlüssel"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_account_id
+msgid "DHL Account ID"
+msgstr "DHL Kontonummer"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_account_id
+msgid "Short DHL account number, e.g. 08500001."
+msgstr "Kurze DHL-Kontonummer, z. B. 08500001."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_pricing_mode
+msgid "DHL pricing mode"
+msgstr "DHL Preismodus"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_pricing_mode
+msgid ""
+"The DHL Parcel API does not return live rates, so the customer price is set "
+"here: a flat amount, or the weight/price rules on the Pricing tab."
+msgstr ""
+"Die DHL Parcel API liefert keine Live-Tarife, daher wird der Kundenpreis "
+"hier festgelegt: ein Pauschalbetrag oder die Gewichts-/Preisregeln im Tab "
+"Preisgestaltung."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_flat_price
+msgid "DHL flat price"
+msgstr "DHL Pauschalpreis"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_parcel_type
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_dhl_parcel_line__parcel_type_consumer
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_dhl_parcel_line__parcel_type_business
+msgid "Parcel type"
+msgstr "Pakettyp"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_parcel_type
+msgid ""
+"Het type van élk pakket dat met deze verzendmethode verzonden wordt. Maak "
+"één verzendmethode per parceltype dat je aanbiedt. Kies 'Gemengd' om "
+"verschillende types in één zending te kunnen combineren — op de delivery "
+"verschijnt dan een DHL Parcels-tab waar je per parcel een type kiest "
+"(zoals in het MyDHLParcel-portal)."
+msgstr ""
+"Der Pakettyp jedes Pakets, das mit dieser Versandmethode verschickt wird. "
+"Legen Sie eine Versandmethode pro Pakettyp an, den Sie anbieten. Wählen Sie "
+"'Gemischt', um verschiedene Typen in einer Sendung zu kombinieren — auf der "
+"Lieferung erscheint dann ein DHL Parcels-Tab, in dem Sie pro Paket einen "
+"Typ wählen (wie im MyDHLParcel-Portal)."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_default_weight
+msgid "Default weight (kg)"
+msgstr "Standardgewicht (kg)"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_default_weight
+msgid ""
+"Used when a parcel's weight is 0 (e.g. products without a weight set). DHL "
+"refuses a 0 kg shipment, so this value is sent instead."
+msgstr ""
+"Wird verwendet, wenn das Paketgewicht 0 ist (z. B. Produkte ohne "
+"hinterlegtes Gewicht). DHL lehnt eine 0-kg-Sendung ab; stattdessen wird "
+"dieser Wert übermittelt."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_stock_picking__dhl_parcel_count
+msgid "Aantal pakketten"
+msgstr "Anzahl Pakete"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_stock_picking__dhl_parcel_count
+msgid ""
+"Aantal identieke pakketten in deze zending (multicollo). Genegeerd zodra je "
+"Put in Pack gebruikt: dan bepalen de aangemaakte packages het aantal pieces."
+msgstr ""
+"Anzahl identischer Pakete in dieser Sendung (Multicollo). Wird ignoriert, "
+"sobald Sie 'In Paket legen' verwenden: dann bestimmen die erstellten Pakete "
+"die Anzahl Stücke."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_stock_picking__dhl_parcel_line_ids
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_picking_form_dhl_parcel
+msgid "DHL Parcels"
+msgstr "DHL Pakete"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_stock_picking__dhl_parcel_line_ids
+msgid ""
+"Used only for DHL methods with parcel type 'Gemengd' (MIX): one row per "
+"parcel, type + qty + optional weight."
+msgstr ""
+"Nur für DHL-Methoden mit Pakettyp 'Gemischt' (MIX): eine Zeile pro Paket, "
+"Typ + Menge + optionales Gewicht."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_stock_picking__dhl_partner_is_company
+msgid ""
+"Drives the recipient-aware parcel-type columns on the DHL Parcels lines."
+msgstr ""
+"Steuert die empfängerabhängigen Pakettyp-Spalten auf den DHL Pakete-Zeilen."
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_dhl_parcel_line__quantity
+msgid "Qty"
+msgstr "Menge"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_dhl_parcel_line__weight
+msgid "Weight (kg)"
+msgstr "Gewicht (kg)"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields,help:delivery_dhl_parcel.field_dhl_parcel_line__weight
+msgid "Optional. The carrier's default weight is used when blank."
+msgstr ""
+"Optional. Bei leerem Feld wird das Standardgewicht des Transportdienstes "
+"verwendet."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/dhl_parcel_line.py:0
+msgid ""
+"Envelop 50 tot 500 gram is alleen beschikbaar voor zendingen naar Nederland "
+"(bestemming: %s)."
+msgstr ""
+"Umschlag 50 bis 500 g ist nur für Sendungen in die Niederlande verfügbar "
+"(Bestimmungsort: %s)."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid "Kies een Parcel type op de DHL-verzendmethode '%s'."
+msgstr "Wählen Sie einen Pakettyp auf der DHL-Versandmethode '%s'."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"DHL Parcel verzendt niet naar de volgende landen: %s.\n"
+"Verwijder deze uit het Countries-veld."
+msgstr ""
+"DHL Parcel liefert nicht in die folgenden Länder: %s.\n"
+"Entfernen Sie diese aus dem Feld Länder."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Het parceltype '%(ptype)s' is enkel beschikbaar voor zendingen naar "
+"%(allowed)s.\n"
+"Verwijder deze landen uit het Countries-veld, of kies een ander parceltype: "
+"%(wrong)s"
+msgstr ""
+"Der Pakettyp '%(ptype)s' ist nur für Sendungen nach %(allowed)s verfügbar.\n"
+"Entfernen Sie diese Länder aus dem Feld Länder, oder wählen Sie einen "
+"anderen Pakettyp: %(wrong)s"
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Het parceltype '%(ptype)s' is enkel beschikbaar voor particuliere "
+"ontvangers. '%(partner)s' is een bedrijf."
+msgstr ""
+"Der Pakettyp '%(ptype)s' ist nur für private Empfänger verfügbar. "
+"'%(partner)s' ist ein Unternehmen."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Het parceltype '%(ptype)s' is enkel beschikbaar voor zakelijke ontvangers. "
+"'%(partner)s' is een particulier."
+msgstr ""
+"Der Pakettyp '%(ptype)s' ist nur für geschäftliche Empfänger verfügbar. "
+"'%(partner)s' ist eine Privatperson."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Voeg minstens één parcel toe in de DHL Parcels-tab op deze delivery, of "
+"kies een DHL-verzendmethode met een vast parceltype."
+msgstr ""
+"Fügen Sie mindestens ein Paket im DHL Pakete-Tab dieser Lieferung hinzu, "
+"oder wählen Sie eine DHL-Versandmethode mit einem festen Pakettyp."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Eén van de parcels in de DHL Parcels-tab heeft geen type. Vul het type aan "
+"vóór je valideert."
+msgstr ""
+"Eines der Pakete im DHL Pakete-Tab hat keinen Typ. Setzen Sie den Typ vor "
+"der Validierung."
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "DHL Parcel"
+msgstr "DHL Parcel"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Credentials"
+msgstr "Zugangsdaten"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Shipment"
+msgstr "Sendung"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_picking_form_dhl_parcel
+msgid ""
+"Eén regel per pakket, zoals in het My DHL Parcel-portal. De type-lijst past "
+"zich aan aan de klant (particulier vs bedrijf). Gewicht is optioneel; de "
+"carrier-default wordt gebruikt indien blanco."
+msgstr ""
+"Eine Zeile pro Paket, wie im My DHL Parcel-Portal. Die Typ-Liste passt "
+"sich an den Kunden an (privat vs. geschäftlich). Das Gewicht ist optional; "
+"der Carrier-Standard wird bei leerem Feld verwendet."
