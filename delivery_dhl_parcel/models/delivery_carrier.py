@@ -253,16 +253,36 @@ class DeliveryCarrier(models.Model):
                 code=resp.status_code, body=resp.text))
         return resp.json()
 
-    def _dhlparcel_fetch_label(self, shipment_id, token):
+    def _dhlparcel_fetch_label(self, label_id, token):
         headers = {"Authorization": "Bearer " + token, "Accept": "application/pdf"}
         try:
-            resp = requests.get(API_BASE + (LABEL_PATH % shipment_id),
+            resp = requests.get(API_BASE + (LABEL_PATH % label_id),
                                 headers=headers, timeout=TIMEOUT)
         except requests.RequestException as exc:
             raise UserError(_("Could not fetch DHL label PDF: %s") % exc) from exc
         if resp.status_code != 200:
             raise UserError(_(
                 "DHL Parcel label fetch failed (HTTP %(code)s): %(body)s",
+                code=resp.status_code, body=resp.text[:500]))
+        return resp.content
+
+    def _dhlparcel_fetch_labels_multi(self, label_ids, token):
+        """For shipments with multiple distinct pieces, GET /labels/{shipmentId}
+        only returns the first piece's label. POST /labels/multi with all
+        labelIds returns one combined PDF covering every piece."""
+        headers = {"Authorization": "Bearer " + token,
+                   "Content-Type": "application/json",
+                   "Accept": "application/pdf"}
+        try:
+            resp = requests.post(API_BASE + "/labels/multi",
+                                 json={"labelIds": list(label_ids)},
+                                 headers=headers, timeout=TIMEOUT)
+        except requests.RequestException as exc:
+            raise UserError(_("Could not fetch DHL combined label PDF: %s")
+                            % exc) from exc
+        if resp.status_code != 200:
+            raise UserError(_(
+                "DHL Parcel multi-label fetch failed (HTTP %(code)s): %(body)s",
                 code=resp.status_code, body=resp.text[:500]))
         return resp.content
 
@@ -451,6 +471,13 @@ class DeliveryCarrier(models.Model):
             trackers.append(response["trackerCode"])
         return trackers
 
+    def _dhlparcel_extract_label_ids(self, response):
+        """All piece labelIds from a shipment response. Used to fetch the
+        per-piece labels (the shipmentId-based fetch only returns the first
+        piece's label)."""
+        return [pc["labelId"] for pc in (response.get("pieces") or [])
+                if pc.get("labelId")]
+
     # ------------------------------------------------------------------
     # carrier API (called by Odoo's delivery framework)
     # ------------------------------------------------------------------
@@ -508,11 +535,17 @@ class DeliveryCarrier(models.Model):
             payload = self._dhlparcel_build_payload(picking, shipment_id, pieces)
             response = self._dhlparcel_create_shipment(payload, token)
             trackers = self._dhlparcel_extract_trackers(response)
+            label_ids = self._dhlparcel_extract_label_ids(response)
 
-            # A single GET /labels/{shipmentId} returns all piece labels in one
-            # multi-page PDF.
+            # GET /labels/{shipmentId} only returns the first piece's label
+            # (DHL re-uses the shipmentId as the first labelId). For >1 piece
+            # we POST /labels/multi with all labelIds to get a combined PDF.
             try:
-                pdf = self._dhlparcel_fetch_label(shipment_id, token)
+                if len(label_ids) > 1:
+                    pdf = self._dhlparcel_fetch_labels_multi(label_ids, token)
+                else:
+                    pdf = self._dhlparcel_fetch_label(
+                        label_ids[0] if label_ids else shipment_id, token)
                 fname = "DHL-%s.pdf" % (trackers[0] if trackers else shipment_id[:8])
                 piece_count = len(trackers) or sum(p["quantity"] for p in pieces)
                 picking.message_post(
