@@ -572,11 +572,13 @@ class DeliveryCarrier(models.Model):
         return TRACK_URL % (picking.carrier_tracking_ref or "")
 
     def dhlparcel_cancel_shipment(self, picking):
-        # The DHL intervention/cancel API is not wired in yet, so we cannot
-        # cancel at DHL from here. Leave carrier_tracking_ref untouched (so the
-        # standard cancel message still shows the tracker) and warn the user.
+        # DHL's public API has no cancel endpoint (only a read-only
+        # /intervention-options to ask whether a cancel would be allowed).
+        # We keep carrier_tracking_ref intact so the operator can look the
+        # shipment up in the portal, and post a chatter note explaining.
         picking.message_post(body=_(
-            "Note: this does NOT cancel the shipment at DHL. The DHL "
-            "cancellation API is not yet integrated, so the shipment(s) "
-            "%s must be cancelled manually in the DHL portal."
+            "Note: this does NOT cancel the shipment at DHL. DHL Parcel's "
+            "public API does not expose a cancel endpoint, so the "
+            "shipment(s) %s must be cancelled manually in the My DHL Parcel "
+            "portal."
         ) % (picking.carrier_tracking_ref or "—"))

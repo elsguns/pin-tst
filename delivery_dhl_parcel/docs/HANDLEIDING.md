@@ -49,9 +49,9 @@ De module doet niet:
 
 - **Live tarieven** ophalen — de DHL Parcel-gateway heeft geen rate-endpoint.
   Prijzen stel je in op de carrier zelf.
-- **Verzendingen annuleren via de API** — DHL biedt dat technisch wel, maar
-  het exacte endpoint zit op een afzonderlijke permission die we nog moeten
-  integreren. Tot dan: annuleren in het My DHL Parcel-portaal.
+- **Verzendingen annuleren via de API** — DHL's publieke API biedt geen
+  cancel-endpoint. Annuleren gebeurt in het My DHL Parcel-portaal (zie
+  hoofdstuk 12).
 - **Verzenden vanuit landen buiten BE/NL/LU** — daarvoor heb je een ander
   DHL-contract en een andere module nodig.
 
@@ -140,7 +140,7 @@ over permissions gaan, is dit het eerste wat je laat verifiëren door DHL.
 
 | Feature | Wat DHL moet voorzien |
 |---|---|
-| Cancellation via API | De `intervention-service.CANCEL`-rol + exacte endpoint (nog niet geïntegreerd) |
+| Cancellation via API | Niet ondersteund door de publieke API — alleen via het portaal |
 | International routes (Parcel Connect, Europlus International) | De juiste contractproducten (CON / EPL-INT / EPL-PAL) |
 | Returns (`returnLabel: true`) | Het overeenkomstige return-product (DFY-RETURN / EPL-RETURN / RETURN-CON) |
 
@@ -492,19 +492,22 @@ Track & trace voor je klant: DHL's publieke tracker-pagina is
 
 ## 12. Annuleren
 
-> **Belangrijke beperking:** annuleren via de API is nog niet geïntegreerd.
+> **Annuleren gebeurt altijd in het My DHL Parcel-portaal.**
+> DHL's publieke API biedt geen endpoint om shipments programmatisch te
+> annuleren. Hun OpenAPI-spec heeft alleen een read-only
+> `GET /intervention-options` om te checken of een cancel toegestaan zou
+> zijn, maar geen POST om de cancel effectief uit te voeren. Dit is geen
+> tijdelijke beperking — zo is het ontwerp van de Business API.
 
-De huidige cancel-actie in Odoo:
+De cancel-actie in Odoo:
 - Verwijdert geen tracking-referentie (zodat je nog steeds weet welk
   shipment je moet annuleren).
-- Plaatst een chatter-note op de delivery: *"DHL cancellation API not
-  integrated yet, please cancel in the portal."*
+- Plaatst een chatter-note op de delivery met de instructie om in het
+  portaal te annuleren.
+- Roept de DHL-API niet aan.
 
 **Wat je moet doen:** log in op My DHL Parcel, zoek de shipment via z'n
 tracker-code, en annuleer 'm daar.
-
-In een toekomstige module-versie wordt de API-cancel toegevoegd zodra DHL
-ons het exacte endpoint heeft bezorgd.
 
 ---
 

@@ -63,15 +63,17 @@ DHL technical contact when in doubt.
   module therefore uses the carrier's configured price (flat amount or
   weight-based rules) for shipping cost on the sale order.
 
-**Optional, each gated by a separate DHL-side setting:**
+- **Cancellation via API.** DHL's public API has no documented endpoint for
+  cancelling a shipment programmatically. Their OpenAPI spec covers
+  `GET /intervention-options` (to ask whether interventions are available)
+  but provides no POST endpoint for actually executing a cancel. Cancellation
+  is meant to happen in the My DHL Parcel portal. The module's cancel action
+  reflects this: it posts a chatter note on the delivery telling the operator
+  to cancel in the portal, and leaves the local tracking reference in place
+  so the operator can look it up. This is not a temporary limitation — it is
+  how the public API is shaped.
 
-- **Cancellation via API** (`/interventions/cancel`). The exact endpoint and
-  request body must be obtained from your DHL tech contact, and the API key
-  needs the matching intervention role. Until that is in place, the module's
-  cancel action posts a chatter note advising you to cancel the shipment in
-  the DHL portal (the local tracking reference is kept so you can read it
-  off when cancelling in the portal). No API call is attempted, so nothing
-  fails.
+**Optional, each gated by a separate DHL-side setting:**
 
 - **International shipping** (Parcel Connect / Europlus / Europlus Pallet /
   Europlus International). These require the corresponding products to be part
@@ -85,9 +87,8 @@ DHL technical contact when in doubt.
 
 **How the module behaves when a permission is missing:**
 - No `label-service.B2X`: a clear UserError points to credentials/permissions.
-- No cancel permission: the cancel action posts a clear chatter note ("DHL
-  cancellation API not integrated yet, please cancel in the portal"). No
-  silent failure.
+- Cancel action: always posts a chatter note ("cancel in the portal"); never
+  calls the API. See above for why.
 - Contract gaps (missing product, missing route): the API's own error message
   is surfaced verbatim in the chatter, which usually identifies the contract
   issue.
@@ -217,10 +218,11 @@ automatically (a home-delivery product for consumers, a business product
 otherwise).
 
 **How do I cancel a shipment?**
-For now, in the DHL portal. The module's cancel action posts a note on the
-delivery (with the tracking reference still readable so you can look it up in
-the portal) but it does not call DHL's cancellation
-API yet.
+In the My DHL Parcel portal — there is no programmatic alternative. DHL's
+public API has no cancel endpoint, only a read-only `GET /intervention-options`
+that reports whether a cancel would be allowed. The module's cancel action
+posts a note on the delivery (with the tracking reference still readable so
+you can look it up in the portal).
 
 **Do shipments created via the API appear in the DHL dashboard?**
 This is account dependent and should be confirmed with DHL for the specific
