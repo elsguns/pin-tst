@@ -68,9 +68,10 @@ DHL technical contact when in doubt.
 - **Cancellation via API** (`/interventions/cancel`). The exact endpoint and
   request body must be obtained from your DHL tech contact, and the API key
   needs the matching intervention role. Until that is in place, the module's
-  cancel action only clears the local tracking reference and posts a chatter
-  note advising you to cancel the shipment in the DHL portal. No API call is
-  attempted, so nothing fails.
+  cancel action posts a chatter note advising you to cancel the shipment in
+  the DHL portal (the local tracking reference is kept so you can read it
+  off when cancelling in the portal). No API call is attempted, so nothing
+  fails.
 
 - **International shipping** (Parcel Connect / Europlus / Europlus Pallet /
   Europlus International). These require the corresponding products to be part
@@ -216,8 +217,9 @@ automatically (a home-delivery product for consumers, a business product
 otherwise).
 
 **How do I cancel a shipment?**
-For now, in the DHL portal. The module's cancel action clears the local tracking
-reference and posts a note on the delivery; it does not call DHL's cancellation
+For now, in the DHL portal. The module's cancel action posts a note on the
+delivery (with the tracking reference still readable so you can look it up in
+the portal) but it does not call DHL's cancellation
 API yet.
 
 **Do shipments created via the API appear in the DHL dashboard?**
