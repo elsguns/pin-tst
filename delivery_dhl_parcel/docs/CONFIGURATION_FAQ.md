@@ -224,6 +224,11 @@ that reports whether a cancel would be allowed. The module's cancel action
 posts a note on the delivery (with the tracking reference still readable so
 you can look it up in the portal).
 
+Note from DHL: a label that was created but the parcel never entered DHL's
+network (i.e. you cancelled before drop-off) is not billed. You only need to
+cancel in the portal if you want the shipment removed from your MDP
+shipment list for housekeeping.
+
 **Do shipments created via the API appear in the DHL dashboard?**
 This is account dependent and should be confirmed with DHL for the specific
 contract.
