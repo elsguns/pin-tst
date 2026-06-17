@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-  <!-- Add Shipping wizard: filter DHL carriers by recipient compatibility,
-       so the operator doesn't see e.g. Brievenbuspakket when picking a
-       method for a business order. Non-DHL carriers stay unfiltered. -->
+  <!-- Add Shipping wizard: filter DHL carriers by recipient compatibility
+       and destination country, so the operator doesn't see e.g.
+       Brievenbuspakket for a business order or Envelop for a BE order.
+       Non-DHL carriers stay unfiltered. -->
   <record id="choose_delivery_carrier_form_dhl_parcel" model="ir.ui.view">
     <field name="name">choose.delivery.carrier.form.dhl.parcel</field>
     <field name="model">choose.delivery.carrier</field>
@@ -11,15 +12,19 @@
     <field name="arch" type="xml">
       <xpath expr="//field[@name='carrier_id']" position="before">
         <field name="dhl_partner_is_company" invisible="1"/>
+        <field name="dhl_partner_country_id" invisible="1"/>
       </xpath>
       <xpath expr="//field[@name='carrier_id']" position="attributes">
         <attribute name="domain">
             ['&amp;',
               ('id', 'in', available_carrier_ids),
               '|', ('delivery_type', '!=', 'dhlparcel'),
-                   ('dhlparcel_recipient_restriction', 'in',
-                    [False,
-                     dhl_partner_is_company and 'business' or 'consumer'])]
+                   '&amp;',
+                     ('dhlparcel_recipient_restriction', 'in',
+                      [False,
+                       dhl_partner_is_company and 'business' or 'consumer']),
+                     '|', ('country_ids', '=', False),
+                          ('country_ids', '=', dhl_partner_country_id)]
         </attribute>
       </xpath>
     </field>

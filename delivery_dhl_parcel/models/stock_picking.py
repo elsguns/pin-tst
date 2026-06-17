@@ -12,6 +12,8 @@ class StockPicking(models.Model):
         related="partner_id.is_company",
         help="Drives the recipient-aware parcel-type columns on the "
              "DHL Parcels lines.")
+    dhl_partner_country_id = fields.Many2one(
+        "res.country", related="partner_id.country_id")
     dhl_parcel_count = fields.Integer(
         string="Aantal pakketten", default=1,
         help="Aantal identieke pakketten in deze zending (multicollo). "

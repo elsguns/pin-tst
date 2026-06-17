@@ -9,14 +9,18 @@
 
       <xpath expr="//field[@name='carrier_id']" position="before">
         <field name="dhl_partner_is_company" invisible="1"/>
+        <field name="dhl_partner_country_id" invisible="1"/>
       </xpath>
 
       <xpath expr="//field[@name='carrier_id']" position="attributes">
         <attribute name="domain">
             ['|',
               ('delivery_type', '!=', 'dhlparcel'),
-              ('dhlparcel_recipient_restriction', 'in',
-               [False, dhl_partner_is_company and 'business' or 'consumer'])]
+              '&amp;',
+                ('dhlparcel_recipient_restriction', 'in',
+                 [False, dhl_partner_is_company and 'business' or 'consumer']),
+                '|', ('country_ids', '=', False),
+                     ('country_ids', '=', dhl_partner_country_id)]
         </attribute>
       </xpath>
 

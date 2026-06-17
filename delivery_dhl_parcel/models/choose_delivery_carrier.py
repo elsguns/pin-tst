@@ -9,3 +9,5 @@ class ChooseDeliveryCarrier(models.TransientModel):
     # (which the view evaluator doesn't always dereference correctly).
     dhl_partner_is_company = fields.Boolean(
         related="order_id.partner_id.is_company")
+    dhl_partner_country_id = fields.Many2one(
+        "res.country", related="order_id.partner_id.country_id")
