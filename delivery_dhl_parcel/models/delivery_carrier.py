@@ -306,6 +306,16 @@ class DeliveryCarrier(models.Model):
     # ------------------------------------------------------------------
     # payload builders
     # ------------------------------------------------------------------
+    @staticmethod
+    def _first(*values):
+        """Return the first truthy value, or ''. Handy for email/phone
+        fallback chains where the literal field may sit on the parent
+        commercial partner rather than the delivery-address contact."""
+        for v in values:
+            if v:
+                return v
+        return ""
+
     def _dhlparcel_build_receiver(self, partner):
         if not partner:
             raise UserError(_("The delivery has no customer address."))
@@ -317,6 +327,10 @@ class DeliveryCarrier(models.Model):
             ) % partner.display_name)
         street, number, addition = _extract_address(partner)
         first_name, last_name = _split_name(partner.name)
+        # Delivery contacts are often children of a commercial partner and
+        # carry no email/phone of their own; fall back to the commercial
+        # partner so DHL gets a contact way to reach the recipient.
+        commercial = partner.commercial_partner_id or partner
         return {
             "name": {
                 "firstName": "" if partner.is_company else first_name,
@@ -333,8 +347,10 @@ class DeliveryCarrier(models.Model):
                 "addition": addition,
                 "isBusiness": partner.is_company,
             },
-            "email": partner.email or "",
-            "phoneNumber": partner.phone or partner.mobile or "",
+            "email": self._first(partner.email, commercial.email),
+            "phoneNumber": self._first(
+                partner.phone, partner.mobile,
+                commercial.phone, commercial.mobile),
         }
 
     def _dhlparcel_build_shipper(self, picking):
@@ -347,10 +363,15 @@ class DeliveryCarrier(models.Model):
                 "The warehouse / company address is incomplete; cannot build "
                 "the DHL shipper address."))
         street, number, addition = _extract_address(partner)
+        # Warehouse partners are typically skeleton address records without
+        # email/phone; fall back to the company partner (and the company
+        # itself for email, which is a related field in core Odoo).
+        company_partner = picking.company_id.partner_id
+        company = picking.company_id
         return {
             "name": {
                 "firstName": "", "lastName": "",
-                "companyName": partner.name or picking.company_id.name,
+                "companyName": partner.name or company.name,
                 "additionalName": "",
             },
             "address": {
@@ -362,8 +383,10 @@ class DeliveryCarrier(models.Model):
                 "addition": addition,
                 "isBusiness": True,
             },
-            "email": partner.email or "",
-            "phoneNumber": partner.phone or "",
+            "email": self._first(
+                partner.email, company_partner.email, company.email),
+            "phoneNumber": self._first(
+                partner.phone, company_partner.phone, company.phone),
         }
 
     @staticmethod
