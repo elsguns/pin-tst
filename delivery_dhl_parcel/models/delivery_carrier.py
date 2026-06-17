@@ -17,8 +17,10 @@ AUTH_PATH = "/authenticate/api-key"
 SHIPMENTS_PATH = "/shipments"
 LABEL_PATH = "/labels/%s"
 TIMEOUT = 30
-# Public consumer track & trace page (tracker + postcode). Provisional URL.
-TRACK_URL = "https://www.dhlparcel.nl/nl/consument/traceer-uw-zending?tt=%s"
+# Public consumer track & trace page. Requires both tracker code and
+# receiver postcode; the older /traceer-uw-zending?tt= URL no longer
+# resolves a real shipment view.
+TRACK_URL = "https://my.dhlecommerce.nl/home/tracktrace/%(tracker)s/%(zip)s?lang=nl_NL"
 
 # Countries DHL Parcel BE/NL/LU can deliver to (per the 2026-01-01 rate card).
 DHL_COUNTRY_CODES = [
@@ -609,7 +611,14 @@ class DeliveryCarrier(models.Model):
         return res
 
     def dhlparcel_get_tracking_link(self, picking):
-        return TRACK_URL % (picking.carrier_tracking_ref or "")
+        # The MyDHL eCommerce track & trace page requires both the tracker
+        # code and the receiver's postal code; without the postcode the
+        # page returns a "no shipment found" error.
+        tracker = (picking.carrier_tracking_ref or "").split(",")[0].strip()
+        zip_code = (picking.partner_id.zip or "").replace(" ", "")
+        if not tracker or not zip_code:
+            return ""
+        return TRACK_URL % {"tracker": tracker, "zip": zip_code}
 
     def dhlparcel_cancel_shipment(self, picking):
         # DHL's public API has no cancel endpoint (only a read-only
