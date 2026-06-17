@@ -9,6 +9,9 @@
     <field name="model">choose.delivery.carrier</field>
     <field name="inherit_id" ref="delivery.choose_delivery_carrier_view_form"/>
     <field name="arch" type="xml">
+      <xpath expr="//field[@name='carrier_id']" position="before">
+        <field name="dhl_partner_is_company" invisible="1"/>
+      </xpath>
       <xpath expr="//field[@name='carrier_id']" position="attributes">
         <attribute name="domain">
             ['&amp;',
@@ -16,7 +19,7 @@
               '|', ('delivery_type', '!=', 'dhlparcel'),
                    ('dhlparcel_recipient_restriction', 'in',
                     [False,
-                     order_id.partner_id.is_company and 'business' or 'consumer'])]
+                     dhl_partner_is_company and 'business' or 'consumer'])]
         </attribute>
       </xpath>
     </field>

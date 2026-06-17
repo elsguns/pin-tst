@@ -7,19 +7,22 @@
     <field name="inherit_id" ref="stock.view_picking_form"/>
     <field name="arch" type="xml">
 
+      <xpath expr="//field[@name='carrier_id']" position="before">
+        <field name="dhl_partner_is_company" invisible="1"/>
+      </xpath>
+
       <xpath expr="//field[@name='carrier_id']" position="attributes">
         <attribute name="domain">
             ['|',
               ('delivery_type', '!=', 'dhlparcel'),
               ('dhlparcel_recipient_restriction', 'in',
-               [False, partner_id.is_company and 'business' or 'consumer'])]
+               [False, dhl_partner_is_company and 'business' or 'consumer'])]
         </attribute>
       </xpath>
 
       <xpath expr="//field[@name='carrier_id']" position="after">
         <field name="dhl_is_dhlparcel" invisible="1"/>
         <field name="dhl_carrier_parcel_type" invisible="1"/>
-        <field name="dhl_partner_is_company" invisible="1"/>
         <field name="dhl_parcel_count"
                invisible="not dhl_is_dhlparcel or dhl_carrier_parcel_type == 'MIX'"/>
       </xpath>
