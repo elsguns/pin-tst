@@ -131,6 +131,23 @@ class DeliveryCarrier(models.Model):
         compute="_compute_dhlparcel_allowed_country_ids",
     )
 
+    # Stored recipient restriction for views to filter on (e.g. hiding
+    # consumer-only carriers when picking a method for a business partner).
+    dhlparcel_recipient_restriction = fields.Selection(
+        [("consumer", "Consumer only"), ("business", "Business only")],
+        compute="_compute_dhlparcel_recipient_restriction",
+        store=True,
+    )
+
+    @api.depends("delivery_type", "dhlparcel_parcel_type")
+    def _compute_dhlparcel_recipient_restriction(self):
+        for rec in self:
+            if rec.delivery_type != "dhlparcel":
+                rec.dhlparcel_recipient_restriction = False
+                continue
+            rec.dhlparcel_recipient_restriction = (
+                DHL_PARCEL_TYPE_RECIPIENT.get(rec.dhlparcel_parcel_type) or False)
+
     # Per-type tariff for the MIX carrier. The cost of a mixed shipment is
     # sum(qty * tariff_for_type) over the DHL parcel lines on the picking.
     dhlparcel_tariff_ids = fields.One2many(
