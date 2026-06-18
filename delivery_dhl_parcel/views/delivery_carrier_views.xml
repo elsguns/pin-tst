@@ -45,6 +45,7 @@
                      invisible="dhlparcel_parcel_type == 'MIX'"/>
               <field name="dhlparcel_flat_price"
                      invisible="dhlparcel_pricing_mode != 'flat' or dhlparcel_parcel_type == 'MIX'"/>
+              <field name="dhlparcel_verbose_logging"/>
             </group>
           </group>
           <div class="text-muted">

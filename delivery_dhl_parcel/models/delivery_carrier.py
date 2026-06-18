@@ -125,6 +125,15 @@ class DeliveryCarrier(models.Model):
              "Kies 'Gemengd' om verschillende types in één zending te kunnen "
              "combineren — op de delivery verschijnt dan een DHL Parcels-tab "
              "waar je per parcel een type kiest (zoals in het MyDHLParcel-portal).")
+    dhlparcel_verbose_logging = fields.Boolean(
+        "Verbose API logging", default=False,
+        help="When enabled, every DHL Parcel API call (request URL, "
+             "request body, response status and response body) is logged "
+             "to the Odoo logs at INFO level. Credentials (User ID, API "
+             "Key, Account ID) are redacted before logging. Leave off in "
+             "normal operation; switch on temporarily when troubleshooting "
+             "a specific issue, then off again to keep logs clean. Errors "
+             "from the API are always logged regardless of this setting.")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -231,6 +240,48 @@ class DeliveryCarrier(models.Model):
     # ------------------------------------------------------------------
     # API plumbing
     # ------------------------------------------------------------------
+    def _dhlparcel_redact(self, text):
+        """Replace this carrier's credentials by ***REDACTED*** so we can
+        safely write request/response bodies to the logs without leaking
+        the User ID, API Key or Account ID."""
+        if not text:
+            return text
+        out = str(text)
+        carrier = self.sudo()
+        for secret in (carrier.dhlparcel_api_key,
+                       carrier.dhlparcel_user_id,
+                       carrier.dhlparcel_account_id):
+            if secret:
+                out = out.replace(secret, "***REDACTED***")
+        return out
+
+    def _dhlparcel_log_api(self, method, url, status, response_text,
+                           request_body=None, exception=None):
+        """Log one DHL API exchange. Errors are always logged at WARNING
+        (regardless of the verbose toggle). On success, log at INFO only
+        when verbose mode is on."""
+        is_error = bool(exception) or (status and status >= 400)
+        if not is_error and not self.dhlparcel_verbose_logging:
+            return
+        msg_parts = [f"[{self.name}] {method} {url}"]
+        if status is not None:
+            msg_parts.append(f"-> HTTP {status}")
+        if exception:
+            msg_parts.append(f"EXCEPTION: {exception}")
+        if request_body is not None:
+            body_str = json.dumps(request_body) if isinstance(
+                request_body, dict) else str(request_body)
+            msg_parts.append(
+                "request: " + self._dhlparcel_redact(body_str)[:2000])
+        if response_text is not None:
+            msg_parts.append(
+                "response: " + self._dhlparcel_redact(response_text)[:2000])
+        msg = " | ".join(msg_parts)
+        if is_error:
+            _logger.warning(msg)
+        else:
+            _logger.info(msg)
+
     def _dhlparcel_authenticate(self):
         self.ensure_one()
         carrier = self.sudo()
@@ -238,74 +289,105 @@ class DeliveryCarrier(models.Model):
             raise UserError(_(
                 "DHL Parcel credentials are not set on shipping method '%s'."
             ) % self.name)
+        url = API_BASE + AUTH_PATH
+        # Do not log the raw auth body even when verbose; it contains the
+        # API key. Log only that an auth call was made.
         try:
             resp = requests.post(
-                API_BASE + AUTH_PATH,
+                url,
                 json={"userId": carrier.dhlparcel_user_id,
                       "key": carrier.dhlparcel_api_key},
                 timeout=TIMEOUT,
             )
         except requests.RequestException as exc:
+            self._dhlparcel_log_api("POST", url, None, None,
+                                    request_body="(credentials)",
+                                    exception=exc)
             raise UserError(_("Could not reach DHL Parcel API: %s") % exc) from exc
         if resp.status_code != 200:
+            self._dhlparcel_log_api("POST", url, resp.status_code, resp.text,
+                                    request_body="(credentials)")
             raise UserError(_(
                 "DHL Parcel authentication failed (HTTP %(code)s): %(body)s",
                 code=resp.status_code, body=resp.text))
+        self._dhlparcel_log_api("POST", url, resp.status_code,
+                                "(JWT token, redacted)",
+                                request_body="(credentials)")
         token = resp.json().get("accessToken")
         if not token:
             raise UserError(_("DHL Parcel authentication returned no accessToken."))
         return token
 
     def _dhlparcel_create_shipment(self, payload, token):
+        url = API_BASE + SHIPMENTS_PATH
         headers = {
             "Authorization": "Bearer " + token,
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
         try:
-            resp = requests.post(API_BASE + SHIPMENTS_PATH, json=payload,
+            resp = requests.post(url, json=payload,
                                  headers=headers, timeout=TIMEOUT)
         except requests.RequestException as exc:
+            self._dhlparcel_log_api("POST", url, None, None,
+                                    request_body=payload, exception=exc)
             raise UserError(_("DHL Parcel API call failed: %s") % exc) from exc
         if resp.status_code not in (200, 201):
-            _logger.warning("DHL Parcel POST /shipments failed: %s — %s",
-                            resp.status_code, resp.text)
+            self._dhlparcel_log_api("POST", url, resp.status_code, resp.text,
+                                    request_body=payload)
             raise UserError(_(
                 "DHL Parcel rejected the shipment (HTTP %(code)s):\n%(body)s",
                 code=resp.status_code, body=resp.text))
+        self._dhlparcel_log_api("POST", url, resp.status_code, resp.text,
+                                request_body=payload)
         return resp.json()
 
     def _dhlparcel_fetch_label(self, label_id, token):
+        url = API_BASE + (LABEL_PATH % label_id)
         headers = {"Authorization": "Bearer " + token, "Accept": "application/pdf"}
         try:
-            resp = requests.get(API_BASE + (LABEL_PATH % label_id),
-                                headers=headers, timeout=TIMEOUT)
+            resp = requests.get(url, headers=headers, timeout=TIMEOUT)
         except requests.RequestException as exc:
+            self._dhlparcel_log_api("GET", url, None, None, exception=exc)
             raise UserError(_("Could not fetch DHL label PDF: %s") % exc) from exc
         if resp.status_code != 200:
+            self._dhlparcel_log_api("GET", url, resp.status_code,
+                                    resp.text[:500])
             raise UserError(_(
                 "DHL Parcel label fetch failed (HTTP %(code)s): %(body)s",
                 code=resp.status_code, body=resp.text[:500]))
+        self._dhlparcel_log_api(
+            "GET", url, resp.status_code,
+            f"(PDF, {len(resp.content)} bytes)")
         return resp.content
 
     def _dhlparcel_fetch_labels_multi(self, label_ids, token):
         """For shipments with multiple distinct pieces, GET /labels/{shipmentId}
         only returns the first piece's label. POST /labels/multi with all
         labelIds returns one combined PDF covering every piece."""
+        url = API_BASE + "/labels/multi"
         headers = {"Authorization": "Bearer " + token,
                    "Content-Type": "application/json",
                    "Accept": "application/pdf"}
+        body = {"labelIds": list(label_ids)}
         try:
-            resp = requests.post(API_BASE + "/labels/multi",
-                                 json={"labelIds": list(label_ids)},
+            resp = requests.post(url, json=body,
                                  headers=headers, timeout=TIMEOUT)
         except requests.RequestException as exc:
+            self._dhlparcel_log_api("POST", url, None, None,
+                                    request_body=body, exception=exc)
             raise UserError(_("Could not fetch DHL combined label PDF: %s")
                             % exc) from exc
         if resp.status_code != 200:
+            self._dhlparcel_log_api("POST", url, resp.status_code,
+                                    resp.text[:500], request_body=body)
             raise UserError(_(
                 "DHL Parcel multi-label fetch failed (HTTP %(code)s): %(body)s",
                 code=resp.status_code, body=resp.text[:500]))
+        self._dhlparcel_log_api(
+            "POST", url, resp.status_code,
+            f"(combined PDF, {len(resp.content)} bytes)",
+            request_body=body)
         return resp.content
 
     # ------------------------------------------------------------------
