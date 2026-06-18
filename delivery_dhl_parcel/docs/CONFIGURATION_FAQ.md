@@ -233,6 +233,16 @@ shipment list for housekeeping.
 This is account dependent and should be confirmed with DHL for the specific
 contract.
 
+**The portal has a "save this customer" tickbox when entering a shipment.
+Does the module use it?**
+No, and it cannot: DHL Parcel's public API has no address-book / customer
+endpoints. The "save customer" tickbox in My DHL Parcel is a portal-internal
+feature that only matters when you enter shipments manually through the
+portal UI. In our flow, Odoo's `res.partner` records are the customer
+database: each delivery sends its receiver address straight from the partner
+to DHL, so there is no need for a second copy of the address living in
+DHL's portal. The tickbox can safely be ignored when using this module.
+
 **Where do I get the API credentials?**
 From the My DHL Parcel / DHL eCommerce portal, under Settings > API Keys. If the
 portal only shows a "Connections" page and no API Keys section, ask the DHL
