@@ -29,6 +29,11 @@
         <field name="dhl_carrier_parcel_type" invisible="1"/>
         <field name="dhl_parcel_count"
                invisible="not dhl_is_dhlparcel or dhl_carrier_parcel_type == 'MIX'"/>
+        <button name="action_dhlparcel_export_debug_bundle" type="object"
+                string="Export DHL debug bundle" icon="fa-bug"
+                class="btn-link"
+                invisible="not dhl_is_dhlparcel"
+                help="Download a JSON file with this picking's full DHL context (carrier config, recipient, what we would send to DHL, last API error) for support. No credentials are included."/>
       </xpath>
 
       <xpath expr="//notebook" position="inside">
