@@ -76,7 +76,7 @@ class StockPicking(models.Model):
                 "default_weight": carrier.dhlparcel_default_weight,
                 "pricing_mode": carrier.dhlparcel_pricing_mode,
                 "flat_price": carrier.dhlparcel_flat_price,
-                "verbose_logging": carrier.dhlparcel_verbose_logging,
+                "debug_logging": carrier.debug_logging,
                 "countries": carrier.country_ids.mapped("code"),
                 "credentials_set": bool(
                     carrier.sudo().dhlparcel_user_id
