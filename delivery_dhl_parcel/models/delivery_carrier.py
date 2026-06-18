@@ -638,6 +638,44 @@ class DeliveryCarrier(models.Model):
     # ------------------------------------------------------------------
     # Debug / diagnostics
     # ------------------------------------------------------------------
+    _DHL_UUID_RE = re.compile(
+        r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        re.IGNORECASE,
+    )
+
+    def _dhlparcel_validate_credential_format(self):
+        """Return a list of human-readable problems with the credential
+        fields' format. DHL's auth endpoint cannot tell us which field is
+        wrong (security), but we can at least catch typos and obviously
+        invalid values before making an API call."""
+        problems = []
+        user_id = (self.dhlparcel_user_id or "").strip()
+        api_key = (self.dhlparcel_api_key or "").strip()
+        account_id = (self.sudo().dhlparcel_account_id or "").strip()
+
+        if not user_id:
+            problems.append(_("DHL User ID is empty."))
+        elif not self._DHL_UUID_RE.match(user_id):
+            problems.append(_(
+                "DHL User ID does not look like a valid UUID "
+                "(expected format: 12345678-1234-1234-1234-123456789012)."))
+
+        if not api_key:
+            problems.append(_("DHL API Key is empty."))
+        elif not self._DHL_UUID_RE.match(api_key):
+            problems.append(_(
+                "DHL API Key does not look like a valid UUID "
+                "(expected format: 12345678-1234-1234-1234-123456789012)."))
+
+        if not account_id:
+            problems.append(_("DHL Account ID is empty."))
+        elif not account_id.isdigit():
+            problems.append(_(
+                "DHL Account ID should be a numeric customer number "
+                "(e.g. 08500001), not %r.") % account_id)
+
+        return problems
+
     def action_dhlparcel_test_connection(self):
         """Authenticate with the configured credentials and probe a
         read-only endpoint to confirm the token works end-to-end. Surfaces
@@ -645,17 +683,34 @@ class DeliveryCarrier(models.Model):
         can self-diagnose credentials / permission issues before contacting
         support."""
         self.ensure_one()
-        if not (self.dhlparcel_user_id and self.dhlparcel_api_key):
-            raise UserError(_(
-                "Set both DHL User ID and DHL API Key before testing the "
-                "connection."))
+
+        format_problems = self._dhlparcel_validate_credential_format()
+        if format_problems:
+            return self._dhlparcel_test_notification(
+                title=_("DHL Parcel: credentials have format problems"),
+                message=("\n".join("- " + p for p in format_problems) +
+                         _("\n\nFix these in the Credentials section, then "
+                           "click Test Connection again.")),
+                kind="danger",
+            )
 
         try:
             token = self._dhlparcel_authenticate()
         except UserError as exc:
+            # All format checks passed but DHL still rejected the pair.
+            # DHL's auth endpoint deliberately does not say which of User ID
+            # / API Key is wrong (security: no enumeration).
             return self._dhlparcel_test_notification(
-                title=_("DHL Parcel: authentication failed"),
-                message=str(exc),
+                title=_("DHL Parcel: authentication rejected"),
+                message=_(
+                    "User ID, API Key and Account ID are all in the right "
+                    "format, but DHL did not accept the User ID + API Key "
+                    "combination.\n\n"
+                    "Likely cause: one of those two values does not match "
+                    "what is currently active in My DHL Parcel -> Settings "
+                    "-> API Keys. DHL's API on purpose does not tell us "
+                    "which of the two is wrong.\n\n"
+                    "DHL response: %s") % exc,
                 kind="danger",
             )
 
