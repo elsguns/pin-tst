@@ -45,8 +45,6 @@
               <field name="dhlparcel_parcel_type"
                      required="delivery_type == 'dhlparcel'"/>
               <field name="dhlparcel_default_weight"/>
-              <separator/>
-              <field name="dhlparcel_verbose_logging"/>
             </group>
             <group>
               <field name="dhlparcel_pricing_mode"
@@ -61,6 +59,9 @@
                 <b>Pricing</b> tab (use <code>weight</code> as the variable).
               </p>
             </group>
+          </group>
+          <group string="Diagnostics">
+            <field name="dhlparcel_verbose_logging"/>
           </group>
           <group string="Status" invisible="not dhlparcel_last_error">
             <field name="dhlparcel_last_error_date"/>

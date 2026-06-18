@@ -319,6 +319,11 @@ msgstr "Sendung"
 
 #. module: delivery_dhl_parcel
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Diagnostics"
+msgstr "Diagnose"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
 msgid "Status"
 msgstr "Status"
 

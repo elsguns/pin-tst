@@ -320,6 +320,11 @@ msgstr "Envoi"
 
 #. module: delivery_dhl_parcel
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Diagnostics"
+msgstr "Diagnostic"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
 msgid "Status"
 msgstr "Statut"
 
