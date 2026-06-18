@@ -160,11 +160,6 @@ msgstr ""
 "in dat geval verstuurd."
 
 #. module: delivery_dhl_parcel
-#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_verbose_logging
-msgid "Verbose API logging"
-msgstr "Uitgebreide API-logging"
-
-#. module: delivery_dhl_parcel
 #: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_last_error
 msgid "Last DHL API error"
 msgstr "Laatste DHL API-fout"
@@ -316,11 +311,6 @@ msgstr "Inloggegevens"
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
 msgid "Shipment"
 msgstr "Zending"
-
-#. module: delivery_dhl_parcel
-#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
-msgid "Diagnostics"
-msgstr "Diagnose"
 
 #. module: delivery_dhl_parcel
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel

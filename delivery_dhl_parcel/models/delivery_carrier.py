@@ -130,20 +130,9 @@ class DeliveryCarrier(models.Model):
         "Last DHL API error", readonly=True, copy=False,
         help="The most recent DHL API error message for this carrier. "
              "Reset by clicking 'Clear last error'. Errors are always "
-             "captured here regardless of the verbose-logging toggle.")
+             "captured here regardless of the Debug logging flag.")
     dhlparcel_last_error_date = fields.Datetime(
         "Last error at", readonly=True, copy=False)
-    dhlparcel_verbose_logging = fields.Boolean(
-        "Verbose API logging", default=False,
-        help="When enabled, every DHL Parcel API call (request URL, "
-             "request body, response status and response body) is logged "
-             "at INFO level. Credentials (User ID, API Key, Account ID) "
-             "are redacted before logging. Logs go to both the Odoo "
-             "server log file AND to Settings -> Technical -> Logging "
-             "(visible without server access). Leave off in normal "
-             "operation; switch on temporarily when troubleshooting, "
-             "then off again to keep logs clean. Errors from the API "
-             "are always logged regardless of this setting.")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -268,13 +257,13 @@ class DeliveryCarrier(models.Model):
     def _dhlparcel_log_api(self, method, url, status, response_text,
                            request_body=None, exception=None):
         """Log one DHL API exchange. Errors are always logged at WARNING
-        (regardless of the verbose toggle). On success, log at INFO only
-        when verbose mode is on. The same line is written to both the
-        Python logger (server log file) and ir.logging (visible in
-        Settings -> Technical -> Logging, so a customer can capture
-        logs without server access)."""
+        (regardless of the carrier's debug_logging flag). On success, log
+        at INFO only when debug_logging is on. The same line is written
+        to both the Python logger (server log file) and ir.logging
+        (visible in Settings -> Technical -> Logging, so a customer can
+        capture logs without server access)."""
         is_error = bool(exception) or (status and status >= 400)
-        if not is_error and not self.dhlparcel_verbose_logging:
+        if not is_error and not self.debug_logging:
             return
         msg_parts = [f"[{self.name}] {method} {url}"]
         if status is not None:

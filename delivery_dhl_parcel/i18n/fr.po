@@ -160,11 +160,6 @@ msgstr ""
 "la place."
 
 #. module: delivery_dhl_parcel
-#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_verbose_logging
-msgid "Verbose API logging"
-msgstr "Journalisation API détaillée"
-
-#. module: delivery_dhl_parcel
 #: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_last_error
 msgid "Last DHL API error"
 msgstr "Dernière erreur API DHL"
@@ -317,11 +312,6 @@ msgstr "Identifiants"
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
 msgid "Shipment"
 msgstr "Envoi"
-
-#. module: delivery_dhl_parcel
-#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
-msgid "Diagnostics"
-msgstr "Diagnostic"
 
 #. module: delivery_dhl_parcel
 #: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel

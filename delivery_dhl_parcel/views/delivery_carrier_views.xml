@@ -60,9 +60,6 @@
               </p>
             </group>
           </group>
-          <group string="Diagnostics">
-            <field name="dhlparcel_verbose_logging"/>
-          </group>
           <group string="Status" invisible="not dhlparcel_last_error">
             <field name="dhlparcel_last_error_date"/>
             <field name="dhlparcel_last_error"/>
