@@ -8,10 +8,15 @@ meant to grow into the customer-facing FAQ.
 
 - Odoo 17 with the delivery features installed (the module depends on
   `stock_delivery`).
-- An active DHL Parcel (DHL eCommerce Benelux) business account that has API
-  access enabled.
+- An active DHL Parcel (DHL eCommerce Benelux) business account.
+- **The API role assigned to that account by DHL.** This is the part most
+  people miss. A standard DHL eCommerce Benelux account does not have API
+  access out of the box; the API role has to be granted by DHL staff on
+  request. Without it, the My DHL Parcel portal does not show an API Keys
+  section and no credentials can be created. See "Where do I get the API
+  credentials?" below for how to request it.
 - API credentials: a **User ID** and an **API Key**, plus the short **Account
-  ID** (customer number). See "Where do I get the API credentials?" below.
+  ID** (customer number). Created in the portal once the API role is active.
 - To ship a delivery as several parcels (multicollo), either use the
   **Number of parcels** field on the delivery (simplest, one DHL piece with
   quantity=N) or enable the **Packages** feature (Inventory > Configuration
@@ -244,10 +249,25 @@ to DHL, so there is no need for a second copy of the address living in
 DHL's portal. The tickbox can safely be ignored when using this module.
 
 **Where do I get the API credentials?**
-From the My DHL Parcel / DHL eCommerce portal, under Settings > API Keys. If the
-portal only shows a "Connections" page and no API Keys section, ask the DHL
-contact to provision API access for the account. The Account ID is the short
-customer number visible on invoices and in the account details.
+There are two steps: first DHL has to enable API access on the account, then
+you create the actual keys in the portal.
+
+1. **DHL grants the API role on your account.** API access is not part of a
+   standard DHL eCommerce Benelux contract. Before any API Key can be
+   created in the portal, your DHL contact (or DHL eCommerce support) has
+   to assign the **API role** to your account. This is a manual action on
+   DHL's side — you cannot trigger it yourself. Mail your DHL account
+   manager with your customer number and explicitly ask them to enable API
+   access on the account so you can create API keys via the portal.
+
+   Until that role is granted, the My DHL Parcel portal shows only a
+   "Connections" page and no API Keys section. That is the signal that
+   step 1 is not yet done.
+
+2. **Create the keys in the portal.** Once DHL confirms the role is
+   active, log into My DHL Parcel and go to **Settings > API Keys**. Copy
+   the **User ID** and **API Key** shown there. The **Account ID** is the
+   short customer number visible on invoices and in your account details.
 
 ## Notes for the integrator
 

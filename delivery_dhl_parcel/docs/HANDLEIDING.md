@@ -119,16 +119,40 @@ eCommerce Benelux** (twee namen voor hetzelfde product). Andere DHL-takken
 
 ### API-credentials
 
-In het My DHL Parcel-portaal: **Settings → API Keys**. Je hebt drie waarden
-nodig:
+Hiervoor zijn twee stappen nodig: **eerst** moet DHL API-toegang activeren
+op je account, **daarna** kan je zelf credentials aanmaken in het portaal.
+
+#### Stap 1 — DHL moet de API-rol toekennen op je account
+
+API-toegang is geen standaardonderdeel van een DHL eCommerce Benelux-
+account. Voor je überhaupt een API Key kan aanmaken in het portaal, moet
+je DHL-contactpersoon (of DHL eCommerce support) de **API-rol** toekennen
+op je account. Dit gebeurt manueel aan DHL-zijde — je kan het zelf niet
+forceren.
+
+Hoe je dat vraagt:
+
+- Mail je DHL-account-manager of DHL eCommerce-support.
+- Vermeld je DHL-klantnummer (zelfde nummer dat later je Account ID wordt).
+- Vraag expliciet om "API access" / "de API-rol" op je account te
+  activeren zodat je API keys kan aanmaken via het portaal.
+
+Tot DHL bevestigt dat de rol toegekend is, ga je in het portaal alleen
+een "Connections"-pagina zien — geen API Keys-sectie. Dat is het signaal
+dat stap 1 nog niet rond is.
+
+#### Stap 2 — API Key aanmaken in het My DHL Parcel-portaal
+
+Eens DHL de rol heeft toegekend: log in op het My DHL Parcel-portaal en
+ga naar **Settings → API Keys**. Hier maak je je credentials aan en kopieer
+je drie waarden:
 
 - **User ID** — een UUID zoals `87dcdd1b-0999-4d96-afaa-09f16a201263`
 - **API Key** — een UUID
 - **Account ID** — je korte DHL-klantnummer, bv. `40051608`
 
-Als je in het portaal alleen een "Connections"-pagina ziet en geen API
-Keys-sectie, vraag dan aan je DHL-contactpersoon om API-toegang te
-activeren op je account.
+Deze drie waarden vul je later in op het DHL Parcel-tabblad van de
+verzendmethode in Odoo.
 
 ### Verplichte JWT-rol: `label-service.B2X`
 
