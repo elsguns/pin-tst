@@ -2,8 +2,8 @@
 <odoo>
 
   <!-- Add Shipping wizard: filter DHL carriers by recipient compatibility
-       and destination country, so the operator doesn't see e.g.
-       Brievenbuspakket for a business order or Envelop for a BE order.
+       and destination country, so the operator doesn't see e.g. a
+       Mailbox parcel for a business order or an Envelope for a BE order.
        Non-DHL carriers stay unfiltered. -->
   <record id="choose_delivery_carrier_form_dhl_parcel" model="ir.ui.view">
     <field name="name">choose.delivery.carrier.form.dhl.parcel</field>

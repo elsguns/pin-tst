@@ -65,7 +65,7 @@
                attached to the picking.</p>
           </div>
         </page>
-        <page string="DHL Tarieven" name="dhlparcel_tariffs"
+        <page string="DHL Tariffs" name="dhlparcel_tariffs"
               invisible="delivery_type != 'dhlparcel' or dhlparcel_parcel_type != 'MIX'">
           <field name="dhlparcel_tariff_ids">
             <tree editable="bottom">
@@ -74,12 +74,12 @@
             </tree>
           </field>
           <p class="text-muted">
-            Vul per parceltype het tarief in dat aan de klant wordt
-            aangerekend. Bij MIX wordt de verzendkost berekend als
-            <code>som(aantal × tarief)</code> over alle parcels op de
-            delivery. Doe <b>Add Shipping</b> opnieuw op het order nadat
-            je de DHL Parcels-tab hebt ingevuld, om de prijs op het order
-            te verversen.
+            Set a price per parcel type, as charged to the customer.
+            For MIX shipping methods the shipping cost is computed as
+            <code>sum(qty × tariff)</code> over all the parcels on the
+            delivery. Re-run <b>Add Shipping</b> on the sales order after
+            filling in the DHL Parcels tab to refresh the price on the
+            order.
           </p>
         </page>
       </xpath>

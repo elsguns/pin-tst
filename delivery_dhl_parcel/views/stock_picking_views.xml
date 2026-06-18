@@ -53,9 +53,10 @@
             </tree>
           </field>
           <p class="text-muted">
-            Eén regel per pakket, zoals in het My DHL Parcel-portal. De
-            type-lijst past zich aan aan de klant (particulier vs bedrijf).
-            Gewicht is optioneel; de carrier-default wordt gebruikt indien blanco.
+            One row per parcel, just like in the My DHL Parcel portal.
+            The type list adapts to the recipient (private person vs
+            company). Weight is optional; the carrier's default weight
+            is used when blank.
           </p>
         </page>
       </xpath>

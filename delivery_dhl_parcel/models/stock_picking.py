@@ -23,10 +23,10 @@ class StockPicking(models.Model):
     dhl_partner_country_id = fields.Many2one(
         "res.country", related="partner_id.country_id")
     dhl_parcel_count = fields.Integer(
-        string="Aantal pakketten", default=1,
-        help="Aantal identieke pakketten in deze zending (multicollo). "
-             "Genegeerd zodra je Put in Pack gebruikt: dan bepalen de "
-             "aangemaakte packages het aantal pieces.")
+        string="Number of parcels", default=1,
+        help="Number of identical parcels in this shipment (multicollo). "
+             "Ignored as soon as you use Put in Pack: the created "
+             "packages then drive the piece count.")
     dhl_parcel_line_ids = fields.One2many(
         "dhl.parcel.line", "picking_id", string="DHL Parcels",
         help="Used only for DHL methods with parcel type 'Gemengd' (MIX): "

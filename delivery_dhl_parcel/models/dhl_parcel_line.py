@@ -3,17 +3,17 @@ from odoo.exceptions import ValidationError
 
 # Recipient-aware DHL parcel types, mirroring the My DHL Parcel portal.
 CONSUMER_TYPES = [
-    ("ENVELOPE", "Envelop 50 tot 500 gram"),
-    ("XSMALL", "Brievenbuspakket"),
-    ("SMALL", "Pakket tot 10kg"),
-    ("SMALL_MEDIUM", "Pakket tot 20kg"),
-    ("MEDIUM", "Pakket tot 31kg"),
+    ("ENVELOPE", "Envelope 50 to 500 g"),
+    ("XSMALL", "Mailbox parcel"),
+    ("SMALL", "Parcel up to 10 kg"),
+    ("SMALL_MEDIUM", "Parcel up to 20 kg"),
+    ("MEDIUM", "Parcel up to 31 kg"),
 ]
 BUSINESS_TYPES = [
-    ("SMALL", "Pakket tot 10kg"),
-    ("SMALL_MEDIUM", "Pakket tot 20kg"),
-    ("MEDIUM", "Pakket tot 31kg"),
-    ("PALLET", "Pallet tot 1000kg"),
+    ("SMALL", "Parcel up to 10 kg"),
+    ("SMALL_MEDIUM", "Parcel up to 20 kg"),
+    ("MEDIUM", "Parcel up to 31 kg"),
+    ("PALLET", "Pallet up to 1000 kg"),
 ]
 
 
@@ -52,6 +52,6 @@ class DhlParcelLine(models.Model):
             country = line.picking_id.partner_id.country_id
             if country and country.code != "NL":
                 raise ValidationError(_(
-                    "Envelop 50 tot 500 gram is alleen beschikbaar voor "
-                    "zendingen naar Nederland (bestemming: %s)."
+                    "Envelope 50 to 500 g is only available for shipments "
+                    "to the Netherlands (destination: %s)."
                 ) % country.name)

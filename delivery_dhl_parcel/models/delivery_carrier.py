@@ -111,20 +111,21 @@ class DeliveryCarrier(models.Model):
     dhlparcel_flat_price = fields.Float("DHL flat price", default=0.0)
     dhlparcel_parcel_type = fields.Selection(
         [
-            ("ENVELOPE", "Envelop 50 tot 500 gram"),
-            ("XSMALL", "Brievenbuspakket"),
-            ("SMALL", "Pakket tot 10kg"),
-            ("SMALL_MEDIUM", "Pakket tot 20kg"),
-            ("MEDIUM", "Pakket tot 31kg"),
-            ("PALLET", "Pallet tot 1000kg"),
-            ("MIX", "Gemengd (kies pakketten per zending)"),
+            ("ENVELOPE", "Envelope 50 to 500 g"),
+            ("XSMALL", "Mailbox parcel"),
+            ("SMALL", "Parcel up to 10 kg"),
+            ("SMALL_MEDIUM", "Parcel up to 20 kg"),
+            ("MEDIUM", "Parcel up to 31 kg"),
+            ("PALLET", "Pallet up to 1000 kg"),
+            ("MIX", "Mixed (pick parcels per shipment)"),
         ],
         string="Parcel type",
-        help="Het type van élk pakket dat met deze verzendmethode verzonden "
-             "wordt. Maak één verzendmethode per parceltype dat je aanbiedt. "
-             "Kies 'Gemengd' om verschillende types in één zending te kunnen "
-             "combineren — op de delivery verschijnt dan een DHL Parcels-tab "
-             "waar je per parcel een type kiest (zoals in het MyDHLParcel-portal).")
+        help="The DHL parcel type for every shipment created through this "
+             "shipping method. Create one shipping method per parcel type "
+             "you offer. Pick 'Mixed' to combine several types in a single "
+             "shipment — the delivery then exposes a DHL Parcels tab where "
+             "you pick a type per parcel (just like the My DHL Parcel "
+             "portal).")
     dhlparcel_last_error = fields.Text(
         "Last DHL API error", readonly=True, copy=False,
         help="The most recent DHL API error message for this carrier. "
@@ -214,14 +215,14 @@ class DeliveryCarrier(models.Model):
                 continue
             if not rec.dhlparcel_parcel_type:
                 raise ValidationError(_(
-                    "Kies een Parcel type op de DHL-verzendmethode '%s'."
+                    "Pick a Parcel type on the DHL shipping method '%s'."
                 ) % rec.name)
             unsupported = rec.country_ids.filtered(
                 lambda c: c.code not in dhl_codes)
             if unsupported:
                 raise ValidationError(_(
-                    "DHL Parcel verzendt niet naar de volgende landen: %s.\n"
-                    "Verwijder deze uit het Countries-veld."
+                    "DHL Parcel does not deliver to the following "
+                    "countries: %s.\nRemove them from the Countries field."
                 ) % ", ".join(unsupported.mapped("name")))
             restricted = DHL_PARCEL_TYPE_COUNTRIES.get(
                 rec.dhlparcel_parcel_type)
@@ -236,10 +237,10 @@ class DeliveryCarrier(models.Model):
                 allowed_names = Country.search(
                     [("code", "in", restricted)]).mapped("name")
                 raise ValidationError(_(
-                    "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
-                    "zendingen naar %(allowed)s.\n"
-                    "Verwijder deze landen uit het Countries-veld, of kies "
-                    "een ander parceltype: %(wrong)s"
+                    "The parcel type '%(ptype)s' is only available for "
+                    "shipments to %(allowed)s.\n"
+                    "Remove these countries from the Countries field, or "
+                    "pick a different parcel type: %(wrong)s"
                 ) % {
                     "ptype": ptype_label,
                     "allowed": ", ".join(allowed_names),
@@ -565,17 +566,17 @@ class DeliveryCarrier(models.Model):
     def _dhlparcel_pieces_from_lines(self, picking):
         if not picking.dhl_parcel_line_ids:
             raise UserError(_(
-                "Voeg minstens één parcel toe in de DHL Parcels-tab op "
-                "deze delivery, of kies een DHL-verzendmethode met een "
-                "vast parceltype."))
+                "Add at least one parcel in the DHL Parcels tab on this "
+                "delivery, or pick a DHL shipping method with a fixed "
+                "parcel type."))
         fallback_weight = self.dhlparcel_default_weight or 1.0
         pieces = []
         for line in picking.dhl_parcel_line_ids:
             ptype = line.parcel_type
             if not ptype:
                 raise UserError(_(
-                    "Eén van de parcels in de DHL Parcels-tab heeft geen "
-                    "type. Vul het type aan vóór je valideert."))
+                    "One of the parcels in the DHL Parcels tab has no "
+                    "type. Set the type before validating."))
             self._dhlparcel_check_recipient_compat(ptype, picking.partner_id)
             weight = (line.weight
                       or self._dhlparcel_default_weight_for_type(ptype)
@@ -600,13 +601,13 @@ class DeliveryCarrier(models.Model):
         is_company = partner.is_company
         if restriction == "consumer" and is_company:
             raise UserError(_(
-                "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
-                "particuliere ontvangers. '%(partner)s' is een bedrijf."
+                "The parcel type '%(ptype)s' is only available for "
+                "private recipients. '%(partner)s' is a company."
             ) % {"ptype": type_label, "partner": partner.display_name})
         if restriction == "business" and not is_company:
             raise UserError(_(
-                "Het parceltype '%(ptype)s' is enkel beschikbaar voor "
-                "zakelijke ontvangers. '%(partner)s' is een particulier."
+                "The parcel type '%(ptype)s' is only available for "
+                "business recipients. '%(partner)s' is a private individual."
             ) % {"ptype": type_label, "partner": partner.display_name})
 
     def _dhlparcel_build_payload(self, picking, shipment_id, pieces):
