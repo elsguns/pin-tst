@@ -1,6 +1,9 @@
+import base64
+import json
 import logging
 import re
 import uuid
+from datetime import datetime, timezone
 
 import requests
 
@@ -631,3 +634,96 @@ class DeliveryCarrier(models.Model):
             "shipment(s) %s must be cancelled manually in the My DHL Parcel "
             "portal."
         ) % (picking.carrier_tracking_ref or "—"))
+
+    # ------------------------------------------------------------------
+    # Debug / diagnostics
+    # ------------------------------------------------------------------
+    def action_dhlparcel_test_connection(self):
+        """Authenticate with the configured credentials and probe a
+        read-only endpoint to confirm the token works end-to-end. Surfaces
+        the JWT roles, account numbers and gateway response so the operator
+        can self-diagnose credentials / permission issues before contacting
+        support."""
+        self.ensure_one()
+        if not (self.dhlparcel_user_id and self.dhlparcel_api_key):
+            raise UserError(_(
+                "Set both DHL User ID and DHL API Key before testing the "
+                "connection."))
+
+        try:
+            token = self._dhlparcel_authenticate()
+        except UserError as exc:
+            return self._dhlparcel_test_notification(
+                title=_("DHL Parcel: authentication failed"),
+                message=str(exc),
+                kind="danger",
+            )
+
+        try:
+            parts = token.split(".")
+            payload = parts[1] + "=" * (-len(parts[1]) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload))
+        except Exception as exc:
+            claims = {}
+            _logger.warning("Could not decode JWT: %s", exc)
+
+        bu = claims.get("businessUnit", "?")
+        roles = claims.get("roles") or []
+        accounts = claims.get("accounts") or []
+        exp_ts = claims.get("exp")
+        exp_str = (
+            datetime.fromtimestamp(exp_ts, tz=timezone.utc)
+            .strftime("%Y-%m-%d %H:%M UTC")
+            if exp_ts else "?"
+        )
+
+        probe_url = (
+            f"{API_BASE}/parcel-types/business/BE"
+            f"?businessUnit={bu}&toCountry=BE"
+            f"&carrier=DHL-PARCEL"
+            f"&accountNumber={self.sudo().dhlparcel_account_id or ''}"
+        )
+        try:
+            probe = requests.get(
+                probe_url,
+                headers={"Authorization": "Bearer " + token,
+                         "Accept": "application/json"},
+                timeout=TIMEOUT,
+            )
+            probe_line = (f"HTTP {probe.status_code} "
+                          f"({len(probe.content)} bytes)")
+            if probe.status_code != 200:
+                probe_line += f" - body: {probe.text[:200]}"
+        except requests.RequestException as exc:
+            probe_line = f"call failed: {exc}"
+
+        message = (
+            f"Authentication OK.\n"
+            f"Business unit: {bu}\n"
+            f"Accounts on key: {', '.join(accounts) or '-'}\n"
+            f"Configured Account ID: "
+            f"{self.sudo().dhlparcel_account_id or '-'}\n"
+            f"Roles: {', '.join(roles) or '-'}\n"
+            f"Token expires: {exp_str}\n"
+            f"Probe /parcel-types/business/BE: {probe_line}"
+        )
+        kind = ("success" if "label-service.B2X" in roles
+                and "HTTP 200" in probe_line else "warning")
+        return self._dhlparcel_test_notification(
+            title=_("DHL Parcel: connection test"),
+            message=message,
+            kind=kind,
+        )
+
+    @staticmethod
+    def _dhlparcel_test_notification(title, message, kind="success"):
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": title,
+                "message": message,
+                "type": kind,  # success | warning | danger | info
+                "sticky": True,
+            },
+        }
