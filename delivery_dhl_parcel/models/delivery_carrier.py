@@ -287,19 +287,24 @@ class DeliveryCarrier(models.Model):
         else:
             _logger.info(msg)
         # Mirror to ir.logging so the customer sees it in the Logging UI
-        # without server access. Wrapped in sudo + try/except so a logging
-        # failure can never break the actual API flow.
+        # without server access. Use a separate cursor so the entry
+        # commits independently of the surrounding transaction — otherwise
+        # a rollback during validate would also discard the log line and
+        # we'd lose the very thing we wanted to capture.
         try:
-            self.env["ir.logging"].sudo().create({
-                "name": "delivery_dhl_parcel",
-                "type": "server",
-                "level": "WARNING" if is_error else "INFO",
-                "message": msg,
-                "path": "delivery_dhl_parcel",
-                "func": "dhlparcel_log_api",
-                "line": "0",
-                "dbname": self.env.cr.dbname,
-            })
+            with self.env.registry.cursor() as new_cr:
+                new_env = api.Environment(
+                    new_cr, self.env.uid, self.env.context)
+                new_env["ir.logging"].sudo().create({
+                    "name": "delivery_dhl_parcel",
+                    "type": "server",
+                    "level": "WARNING" if is_error else "INFO",
+                    "message": msg,
+                    "path": "delivery_dhl_parcel",
+                    "func": "dhlparcel_log_api",
+                    "line": "0",
+                    "dbname": new_cr.dbname,
+                })
         except Exception:
             _logger.exception("Could not persist DHL API log to ir.logging")
 
