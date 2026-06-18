@@ -27,17 +27,21 @@
       <xpath expr="//notebook" position="inside">
         <page string="DHL Parcel" name="dhlparcel"
               invisible="delivery_type != 'dhlparcel'">
-          <group>
-            <group string="Credentials">
+          <group string="Credentials">
+            <group>
               <field name="dhlparcel_user_id"/>
-              <field name="dhlparcel_api_key" password="True"/>
               <field name="dhlparcel_account_id"/>
               <button name="action_dhlparcel_test_connection" type="object"
                       string="Test Connection" icon="fa-plug"
                       class="btn-link"
                       help="Authenticate against DHL and probe a read-only endpoint to confirm the credentials work."/>
             </group>
-            <group string="Shipment">
+            <group>
+              <field name="dhlparcel_api_key" password="True"/>
+            </group>
+          </group>
+          <group string="Shipment">
+            <group>
               <field name="dhlparcel_parcel_type"
                      required="delivery_type == 'dhlparcel'"/>
               <field name="dhlparcel_default_weight"/>

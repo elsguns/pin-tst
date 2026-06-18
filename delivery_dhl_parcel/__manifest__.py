@@ -24,7 +24,7 @@
     'website': "https://bartvenken.be",
     'license': 'LGPL-3',
     'category': 'Inventory/Delivery',
-    'version': '17.0.0.6.9',
+    'version': '17.0.0.6.10',
     'depends': ['stock_delivery'],
     'data': [
         'security/ir.model.access.csv',
