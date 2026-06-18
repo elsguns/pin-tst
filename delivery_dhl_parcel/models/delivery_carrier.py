@@ -284,11 +284,11 @@ class DeliveryCarrier(models.Model):
         if request_body is not None:
             body_str = json.dumps(request_body) if isinstance(
                 request_body, dict) else str(request_body)
-            msg_parts.append(
-                "request: " + self._dhlparcel_redact(body_str)[:2000])
+            redacted = self._dhlparcel_redact(body_str)[:2000]
+            msg_parts.append("request: " + (redacted or "(empty)"))
         if response_text is not None:
-            msg_parts.append(
-                "response: " + self._dhlparcel_redact(response_text)[:2000])
+            redacted = self._dhlparcel_redact(response_text)[:2000]
+            msg_parts.append("response: " + (redacted or "(empty)"))
         msg = " | ".join(msg_parts)
         if is_error:
             _logger.warning(msg)
