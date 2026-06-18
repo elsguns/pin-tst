@@ -125,6 +125,13 @@ class DeliveryCarrier(models.Model):
              "Kies 'Gemengd' om verschillende types in één zending te kunnen "
              "combineren — op de delivery verschijnt dan een DHL Parcels-tab "
              "waar je per parcel een type kiest (zoals in het MyDHLParcel-portal).")
+    dhlparcel_last_error = fields.Text(
+        "Last DHL API error", readonly=True, copy=False,
+        help="The most recent DHL API error message for this carrier. "
+             "Reset by clicking 'Clear last error'. Errors are always "
+             "captured here regardless of the verbose-logging toggle.")
+    dhlparcel_last_error_date = fields.Datetime(
+        "Last error at", readonly=True, copy=False)
     dhlparcel_verbose_logging = fields.Boolean(
         "Verbose API logging", default=False,
         help="When enabled, every DHL Parcel API call (request URL, "
@@ -286,11 +293,10 @@ class DeliveryCarrier(models.Model):
             _logger.warning(msg)
         else:
             _logger.info(msg)
-        # Mirror to ir.logging so the customer sees it in the Logging UI
-        # without server access. Use a separate cursor so the entry
-        # commits independently of the surrounding transaction — otherwise
-        # a rollback during validate would also discard the log line and
-        # we'd lose the very thing we wanted to capture.
+        # Mirror to ir.logging + (on error) update the carrier's
+        # last-error fields. Both writes go via a separate cursor so they
+        # survive a rollback of the outer validate transaction — that
+        # rollback is exactly when we most want the trail to persist.
         try:
             with self.env.registry.cursor() as new_cr:
                 new_env = api.Environment(
@@ -305,6 +311,11 @@ class DeliveryCarrier(models.Model):
                     "line": "0",
                     "dbname": new_cr.dbname,
                 })
+                if is_error:
+                    new_env["delivery.carrier"].sudo().browse(self.id).write({
+                        "dhlparcel_last_error": msg,
+                        "dhlparcel_last_error_date": fields.Datetime.now(),
+                    })
         except Exception:
             _logger.exception("Could not persist DHL API log to ir.logging")
 
@@ -890,3 +901,10 @@ class DeliveryCarrier(models.Model):
                 "sticky": True,
             },
         }
+
+    def action_dhlparcel_clear_last_error(self):
+        """Reset the last-error fields on this carrier."""
+        self.write({
+            "dhlparcel_last_error": False,
+            "dhlparcel_last_error_date": False,
+        })

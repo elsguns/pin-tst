@@ -48,6 +48,13 @@
               <field name="dhlparcel_verbose_logging"/>
             </group>
           </group>
+          <group string="Status" invisible="not dhlparcel_last_error">
+            <field name="dhlparcel_last_error_date"/>
+            <field name="dhlparcel_last_error"/>
+            <button name="action_dhlparcel_clear_last_error" type="object"
+                    string="Clear last error" icon="fa-eraser"
+                    class="btn-link"/>
+          </group>
           <div class="text-muted">
             <p>The DHL Parcel API does not return live shipping rates, so the
                customer price is set here. Choose <b>Flat price</b> for a fixed
