@@ -31,13 +31,13 @@
             <group>
               <field name="dhlparcel_user_id"/>
               <field name="dhlparcel_account_id"/>
+            </group>
+            <group>
+              <field name="dhlparcel_api_key" password="True"/>
               <button name="action_dhlparcel_test_connection" type="object"
                       string="Test Connection" icon="fa-plug"
                       class="btn-link"
                       help="Authenticate against DHL and probe a read-only endpoint to confirm the credentials work."/>
-            </group>
-            <group>
-              <field name="dhlparcel_api_key" password="True"/>
             </group>
           </group>
           <group string="Shipment">
@@ -45,6 +45,7 @@
               <field name="dhlparcel_parcel_type"
                      required="delivery_type == 'dhlparcel'"/>
               <field name="dhlparcel_default_weight"/>
+              <separator/>
               <field name="dhlparcel_verbose_logging"/>
             </group>
             <group>
@@ -68,11 +69,6 @@
                     string="Clear last error" icon="fa-eraser"
                     class="btn-link"/>
           </group>
-          <p class="text-muted">
-            The shipper address is taken from the warehouse (or company)
-            address. The label is created when the delivery is validated and
-            attached to the picking.
-          </p>
         </page>
         <page string="DHL Tariffs" name="dhlparcel_tariffs"
               invisible="delivery_type != 'dhlparcel' or dhlparcel_parcel_type != 'MIX'">
