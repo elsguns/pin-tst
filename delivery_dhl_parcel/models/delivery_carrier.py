@@ -913,8 +913,12 @@ class DeliveryCarrier(models.Model):
             kind=kind,
         )
 
-    @staticmethod
-    def _dhlparcel_test_notification(title, message, kind="success"):
+    def _dhlparcel_test_notification(self, title, message, kind="success"):
+        # Re-open the carrier form fresh after the notification so the
+        # sandbox/production banner reflects what Test Connection just
+        # detected, instead of the stale state the form was last loaded
+        # with. Notifications are non-sticky to avoid them stacking when
+        # the operator runs Test Connection a few times in a row.
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
@@ -922,15 +926,14 @@ class DeliveryCarrier(models.Model):
                 "title": title,
                 "message": message,
                 "type": kind,  # success | warning | danger | info
-                "sticky": True,
-                # Soft-reload the current view after the notification so
-                # any state change from the test (e.g. the detected key
-                # environment) is reflected immediately in the form -
-                # otherwise the user has to refresh by hand to see the
-                # banner appear or disappear.
+                "sticky": False,
                 "next": {
-                    "type": "ir.actions.client",
-                    "tag": "soft_reload",
+                    "type": "ir.actions.act_window",
+                    "res_model": "delivery.carrier",
+                    "res_id": self.id,
+                    "view_mode": "form",
+                    "views": [[False, "form"]],
+                    "target": "current",
                 },
             },
         }
