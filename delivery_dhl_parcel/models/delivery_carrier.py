@@ -367,6 +367,9 @@ class DeliveryCarrier(models.Model):
                         new_cr, self.env.uid, self.env.context)
                     new_env["delivery.carrier"].sudo().browse(self.id).write(
                         {"dhlparcel_key_environment": env})
+                # Also update the current transaction so a follow-up
+                # form reload in the same request sees the new value.
+                self.sudo().write({"dhlparcel_key_environment": env})
         except Exception:
             _logger.exception("Could not parse sandbox claim from DHL JWT")
         return token
@@ -920,6 +923,15 @@ class DeliveryCarrier(models.Model):
                 "message": message,
                 "type": kind,  # success | warning | danger | info
                 "sticky": True,
+                # Soft-reload the current view after the notification so
+                # any state change from the test (e.g. the detected key
+                # environment) is reflected immediately in the form -
+                # otherwise the user has to refresh by hand to see the
+                # banner appear or disappear.
+                "next": {
+                    "type": "ir.actions.client",
+                    "tag": "soft_reload",
+                },
             },
         }
 
