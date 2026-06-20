@@ -824,13 +824,14 @@ class DeliveryCarrier(models.Model):
 
         format_problems = self._dhlparcel_validate_credential_format()
         if format_problems:
-            return self._dhlparcel_test_notification(
+            self._dhlparcel_test_notification(
                 title=_("DHL Parcel: credentials have format problems"),
                 message=("\n".join("- " + p for p in format_problems) +
                          _("\n\nFix these in the Credentials section, then "
                            "click Test Connection again.")),
                 kind="danger",
             )
+            return
 
         try:
             token = self._dhlparcel_authenticate()
@@ -838,7 +839,7 @@ class DeliveryCarrier(models.Model):
             # All format checks passed but DHL still rejected the pair.
             # DHL's auth endpoint deliberately does not say which of User ID
             # / API Key is wrong (security: no enumeration).
-            return self._dhlparcel_test_notification(
+            self._dhlparcel_test_notification(
                 title=_("DHL Parcel: authentication rejected"),
                 message=_(
                     "User ID, API Key and Account ID are all in the right "
@@ -851,6 +852,7 @@ class DeliveryCarrier(models.Model):
                     "DHL response: %s") % exc,
                 kind="danger",
             )
+            return
 
         try:
             parts = token.split(".")
@@ -907,36 +909,31 @@ class DeliveryCarrier(models.Model):
         )
         kind = ("success" if "label-service.B2X" in roles
                 and "HTTP 200" in probe_line else "warning")
-        return self._dhlparcel_test_notification(
+        self._dhlparcel_test_notification(
             title=_("DHL Parcel: connection test"),
             message=message,
             kind=kind,
         )
 
     def _dhlparcel_test_notification(self, title, message, kind="success"):
-        # Re-open the carrier form fresh after the notification so the
-        # sandbox/production banner reflects what Test Connection just
-        # detected, instead of the stale state the form was last loaded
-        # with. Notifications are non-sticky to avoid them stacking when
-        # the operator runs Test Connection a few times in a row.
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
+        # Push a non-sticky popup through the bus instead of returning a
+        # display_notification action. Returning an action would prevent
+        # Odoo's standard "button auto-reload" from kicking in, so the
+        # sandbox/production banner would stay stale until the user
+        # refreshed by hand. By sending the notification asynchronously
+        # via the bus and returning nothing from the button, the form
+        # reloads the record automatically (staying on the DHL Parcel
+        # notebook tab) and the banner reflects what we just detected.
+        self.env["bus.bus"]._sendone(
+            self.env.user.partner_id,
+            "simple_notification",
+            {
                 "title": title,
                 "message": message,
                 "type": kind,  # success | warning | danger | info
                 "sticky": False,
-                "next": {
-                    "type": "ir.actions.act_window",
-                    "res_model": "delivery.carrier",
-                    "res_id": self.id,
-                    "view_mode": "form",
-                    "views": [[False, "form"]],
-                    "target": "current",
-                },
             },
-        }
+        )
 
     def action_dhlparcel_clear_last_error(self):
         """Reset the last-error fields on this carrier."""
