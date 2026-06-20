@@ -133,6 +133,15 @@ class DeliveryCarrier(models.Model):
              "captured here regardless of the Debug logging flag.")
     dhlparcel_last_error_date = fields.Datetime(
         "Last error at", readonly=True, copy=False)
+    dhlparcel_key_environment = fields.Selection(
+        [("sandbox", "Sandbox"), ("production", "Production")],
+        "Detected key environment", readonly=True, copy=False,
+        help="Whether the DHL API key last seen authenticating is a "
+             "sandbox key (shipments are validated but never enter DHL's "
+             "network) or a production key (shipments are real). Read from "
+             "the 'sandbox' claim in the JWT returned by DHL on every "
+             "successful authentication. Blank until the first successful "
+             "Test Connection or shipment.")
     dhlparcel_default_weight = fields.Float(
         "Default weight (kg)", default=1.0,
         help="Used when a parcel's weight is 0 (e.g. products without a weight "
@@ -343,6 +352,23 @@ class DeliveryCarrier(models.Model):
         token = resp.json().get("accessToken")
         if not token:
             raise UserError(_("DHL Parcel authentication returned no accessToken."))
+        # Inspect the JWT for the sandbox claim and persist the env on
+        # the carrier so the form can warn on a sandbox/production
+        # mismatch. Separate cursor so this commits even if the wrapping
+        # validate transaction rolls back.
+        try:
+            parts = token.split(".")
+            payload = parts[1] + "=" * (-len(parts[1]) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload))
+            env = "sandbox" if claims.get("sandbox") is True else "production"
+            if self.dhlparcel_key_environment != env:
+                with self.env.registry.cursor() as new_cr:
+                    new_env = api.Environment(
+                        new_cr, self.env.uid, self.env.context)
+                    new_env["delivery.carrier"].sudo().browse(self.id).write(
+                        {"dhlparcel_key_environment": env})
+        except Exception:
+            _logger.exception("Could not parse sandbox claim from DHL JWT")
         return token
 
     def _dhlparcel_create_shipment(self, payload, token):
@@ -861,8 +887,13 @@ class DeliveryCarrier(models.Model):
         except requests.RequestException as exc:
             probe_line = f"call failed: {exc}"
 
+        is_sandbox = claims.get("sandbox") is True
+        env_label = _("Sandbox (test) - shipments are validated but never "
+                      "enter DHL's network") if is_sandbox else _(
+                      "Production - shipments are real and billed")
         message = (
             f"Authentication OK.\n"
+            f"Key environment: {env_label}\n"
             f"Business unit: {bu}\n"
             f"Accounts on key: {', '.join(accounts) or '-'}\n"
             f"Configured Account ID: "

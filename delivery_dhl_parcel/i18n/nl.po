@@ -170,6 +170,31 @@ msgid "Last error at"
 msgstr "Laatste fout op"
 
 #. module: delivery_dhl_parcel
+#: model:ir.model.fields,field_description:delivery_dhl_parcel.field_delivery_carrier__dhlparcel_key_environment
+msgid "Detected key environment"
+msgstr "Gedetecteerde key-omgeving"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_key_environment__sandbox
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#. module: delivery_dhl_parcel
+#: model:ir.model.fields.selection,name:delivery_dhl_parcel.selection__delivery_carrier__dhlparcel_key_environment__production
+msgid "Production"
+msgstr "Productie"
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Production environment is set, but the API key is a sandbox key."
+msgstr "Productie-omgeving is ingesteld, maar de API key is een sandbox-key."
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid "Test environment is set, but the API key is a production key."
+msgstr "Test-omgeving is ingesteld, maar de API key is een productie-key."
+
+#. module: delivery_dhl_parcel
 #: model:ir.model.fields,field_description:delivery_dhl_parcel.field_stock_picking__dhl_parcel_count
 msgid "Number of parcels"
 msgstr "Aantal pakketten"
