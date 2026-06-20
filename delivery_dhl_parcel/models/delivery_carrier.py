@@ -203,6 +203,26 @@ class DeliveryCarrier(models.Model):
             else:
                 rec.dhlparcel_allowed_country_ids = dhl_countries
 
+    def write(self, vals):
+        res = super().write(vals)
+        # If the API credentials changed on a DHL Parcel carrier, run
+        # an authentication right away so the detected key environment
+        # (and therefore the sandbox/production banner) reflects the
+        # new key without the operator having to click Test Connection.
+        # Silently absorb auth failures: the banner just stays hidden
+        # until the operator fixes the creds or probes manually.
+        if vals.get("dhlparcel_user_id") or vals.get("dhlparcel_api_key"):
+            for rec in self.filtered(
+                    lambda c: c.delivery_type == "dhlparcel"
+                    and c.dhlparcel_user_id and c.dhlparcel_api_key):
+                try:
+                    rec._dhlparcel_authenticate()
+                except Exception as exc:
+                    _logger.info(
+                        "DHL env auto-detect after save failed for "
+                        "carrier %s: %s", rec.name, exc)
+        return res
+
     @api.constrains(
         "delivery_type", "country_ids", "dhlparcel_parcel_type")
     def _check_dhlparcel_countries(self):
