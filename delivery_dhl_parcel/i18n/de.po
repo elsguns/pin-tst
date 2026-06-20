@@ -195,6 +195,59 @@ msgid "Test environment is set, but the API key is a production key."
 msgstr "Die Testumgebung ist eingestellt, der API-Schlüssel ist jedoch ein Produktionsschlüssel."
 
 #. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid ""
+"Shipments created with this carrier will be validated by DHL but will not "
+"enter the network and will not be billed. Either switch the toggle at the "
+"top of this form to Test Environment, or replace the API key with a "
+"production key from My DHL Parcel."
+msgstr ""
+"Mit diesem Transporteur erstellte Sendungen werden von DHL validiert, "
+"gelangen aber nicht ins Netzwerk und werden nicht berechnet. Stellen Sie "
+"den Schalter oben in diesem Formular auf Test Environment um, oder ersetzen "
+"Sie den API-Schlüssel durch einen Produktionsschlüssel aus My DHL Parcel."
+
+#. module: delivery_dhl_parcel
+#: model_terms:ir.ui.view,arch_db:delivery_dhl_parcel.view_delivery_carrier_form_dhlparcel
+msgid ""
+"Shipments created with this carrier will be real DHL shipments and will be "
+"billed. Either switch the toggle at the top of this form to Production "
+"Environment, or replace the API key with a sandbox key from My DHL Parcel."
+msgstr ""
+"Mit diesem Transporteur erstellte Sendungen sind echte DHL-Sendungen und "
+"werden berechnet. Stellen Sie den Schalter oben in diesem Formular auf "
+"Production Environment um, oder ersetzen Sie den API-Schlüssel durch einen "
+"Sandbox-Schlüssel aus My DHL Parcel."
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid "DHL Parcel: connection test"
+msgstr "DHL Parcel: Verbindungstest"
+
+#. module: delivery_dhl_parcel
+#. odoo-python
+#: code:addons/delivery_dhl_parcel/models/delivery_carrier.py:0
+msgid ""
+"Authentication OK.\n"
+"Key environment: %(env)s\n"
+"Business unit: %(bu)s\n"
+"Accounts on key: %(accounts)s\n"
+"Configured Account ID: %(account_id)s\n"
+"Roles: %(roles)s\n"
+"Token expires: %(exp)s\n"
+"Probe /parcel-types/business/BE: %(probe)s"
+msgstr ""
+"Authentifizierung OK.\n"
+"Schlüsselumgebung: %(env)s\n"
+"Business Unit: %(bu)s\n"
+"Konten auf dem Schlüssel: %(accounts)s\n"
+"Konfigurierte Konto-ID: %(account_id)s\n"
+"Rollen: %(roles)s\n"
+"Token läuft ab: %(exp)s\n"
+"Probe /parcel-types/business/BE: %(probe)s"
+
+#. module: delivery_dhl_parcel
 #: model:ir.model.fields,field_description:delivery_dhl_parcel.field_stock_picking__dhl_parcel_count
 msgid "Number of parcels"
 msgstr "Anzahl Pakete"

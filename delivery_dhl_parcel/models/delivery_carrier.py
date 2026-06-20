@@ -916,17 +916,24 @@ class DeliveryCarrier(models.Model):
         env_label = _("Sandbox (test) - shipments are validated but never "
                       "enter DHL's network") if is_sandbox else _(
                       "Production - shipments are real and billed")
-        message = (
-            f"Authentication OK.\n"
-            f"Key environment: {env_label}\n"
-            f"Business unit: {bu}\n"
-            f"Accounts on key: {', '.join(accounts) or '-'}\n"
-            f"Configured Account ID: "
-            f"{self.sudo().dhlparcel_account_id or '-'}\n"
-            f"Roles: {', '.join(roles) or '-'}\n"
-            f"Token expires: {exp_str}\n"
-            f"Probe /parcel-types/business/BE: {probe_line}"
-        )
+        message = _(
+            "Authentication OK.\n"
+            "Key environment: %(env)s\n"
+            "Business unit: %(bu)s\n"
+            "Accounts on key: %(accounts)s\n"
+            "Configured Account ID: %(account_id)s\n"
+            "Roles: %(roles)s\n"
+            "Token expires: %(exp)s\n"
+            "Probe /parcel-types/business/BE: %(probe)s"
+        ) % {
+            "env": env_label,
+            "bu": bu,
+            "accounts": ", ".join(accounts) or "-",
+            "account_id": self.sudo().dhlparcel_account_id or "-",
+            "roles": ", ".join(roles) or "-",
+            "exp": exp_str,
+            "probe": probe_line,
+        }
         kind = ("success" if "label-service.B2X" in roles
                 and "HTTP 200" in probe_line else "warning")
         self._dhlparcel_test_notification(

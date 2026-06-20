@@ -31,18 +31,16 @@
           <div class="alert alert-danger" role="alert"
                invisible="not (prod_environment and dhlparcel_key_environment == 'sandbox')">
             <strong>Production environment is set, but the API key is a sandbox key.</strong>
-            Shipments created with this carrier will be validated by DHL but
-            will not enter the network and will not be billed. Either switch
-            the toggle at the top of this form to <i>Test Environment</i>, or
-            replace the API key with a production key from My DHL Parcel.
+            <p>
+              Shipments created with this carrier will be validated by DHL but will not enter the network and will not be billed. Either switch the toggle at the top of this form to Test Environment, or replace the API key with a production key from My DHL Parcel.
+            </p>
           </div>
           <div class="alert alert-warning" role="alert"
                invisible="not (not prod_environment and dhlparcel_key_environment == 'production')">
             <strong>Test environment is set, but the API key is a production key.</strong>
-            Shipments created with this carrier will be real DHL shipments and
-            will be billed. Either switch the toggle at the top of this form
-            to <i>Production Environment</i>, or replace the API key with a
-            sandbox key from My DHL Parcel.
+            <p>
+              Shipments created with this carrier will be real DHL shipments and will be billed. Either switch the toggle at the top of this form to Production Environment, or replace the API key with a sandbox key from My DHL Parcel.
+            </p>
           </div>
           <group string="Credentials">
             <group>
