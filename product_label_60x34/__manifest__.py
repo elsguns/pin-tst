@@ -1,6 +1,6 @@
 {
     'name': 'Product Label 60 x 34 mm',
-    'version': '17.0.1.0.0',
+    'version': '17.0.1.0.1',
     'category': 'Inventory',
     'summary': 'Adds a 60 x 34 mm barcode label as a format option in the Print Labels popup',
     'description': """
