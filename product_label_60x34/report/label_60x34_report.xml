@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_label_60x34" model="report.paperformat">
+        <field name="name">Label 60 x 34 mm</field>
+        <field name="default" eval="False"/>
+        <field name="format">custom</field>
+        <field name="page_width">60</field>
+        <field name="page_height">34</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+        <field name="disable_shrinking" eval="True"/>
+    </record>
+
+    <record id="report_action_label_60x34" model="ir.actions.report">
+        <field name="name">Product Label 60 x 34 mm</field>
+        <field name="model">product.template</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">product_label_60x34.report_label_60x34</field>
+        <field name="report_file">product_label_60x34.report_label_60x34</field>
+        <field name="paperformat_id" ref="paperformat_label_60x34"/>
+        <field name="print_report_name">'Product Labels 60x34 - %s' % (object.name)</field>
+        <!-- Reachable only through the Print Labels popup, not as a bound Print action. -->
+        <field name="binding_model_id" eval="False"/>
+    </record>
+</odoo>

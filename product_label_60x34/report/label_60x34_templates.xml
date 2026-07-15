@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_label_60x34">
+        <t t-call="web.html_container">
+            <!-- quantity = {product: [(barcode, qty), ...]} built by _prepare_data.
+                 Loop product -> barcode tuples -> qty copies, one label per page. -->
+            <t t-foreach="quantity.items()" t-as="barcode_and_qty_by_product">
+                <t t-set="product" t-value="barcode_and_qty_by_product[0]"/>
+                <t t-foreach="barcode_and_qty_by_product[1]" t-as="barcode_and_qty">
+                    <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                    <t t-foreach="range(barcode_and_qty[1])" t-as="copy">
+                        <div t-attf-style="width:56mm;height:30mm;text-align:center;font-family:Arial,sans-serif;{{'' if (barcode_and_qty_by_product_first and barcode_and_qty_first and copy_first) else 'page-break-before:always;'}}">
+                            <t t-if="barcode">
+                                <div style="margin-top:2mm;">
+                                    <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 150, 'img_style': 'width:55mm;height:14.4mm;'}"/>
+                                    <div style="font-size:7pt;margin-top:0.5mm;"><span t-esc="barcode"/></div>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div style="font-size:7pt;color:#888;margin-top:2mm;">No barcode</div>
+                            </t>
+                            <div style="font-size:7pt;font-weight:bold;line-height:1.15;max-height:12mm;overflow:hidden;margin-top:2mm;">
+                                <span t-field="product.name"/>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
