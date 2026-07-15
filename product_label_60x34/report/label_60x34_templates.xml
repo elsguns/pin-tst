@@ -2,6 +2,12 @@
 <odoo>
     <template id="report_label_60x34">
         <t t-call="web.html_container">
+            <!-- Kill the default body margin and the Bootstrap .container side
+                 padding so the label uses the full 56mm printable width. -->
+            <style>
+                html, body { margin: 0 !important; padding: 0 !important; }
+                body.container, .container { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+            </style>
             <!-- quantity = {product: [(barcode, qty), ...]} built by _prepare_data.
                  Loop product -> barcode tuples -> qty copies, one label per page. -->
             <t t-foreach="quantity.items()" t-as="barcode_and_qty_by_product">
@@ -9,17 +15,17 @@
                 <t t-foreach="barcode_and_qty_by_product[1]" t-as="barcode_and_qty">
                     <t t-set="barcode" t-value="barcode_and_qty[0]"/>
                     <t t-foreach="range(barcode_and_qty[1])" t-as="copy">
-                        <div t-attf-style="width:58mm;height:33mm;margin:0 auto;text-align:center;font-family:Arial,sans-serif;{{'' if (barcode_and_qty_by_product_first and barcode_and_qty_first and copy_first) else 'page-break-before:always;'}}">
+                        <!-- padding-top (not margin-top) gives a real gap above the
+                             barcode without margin-collapsing through the parent. -->
+                        <div t-attf-style="box-sizing:border-box;width:100%;padding-top:3mm;text-align:center;font-family:Arial,sans-serif;{{'' if (barcode_and_qty_by_product_first and barcode_and_qty_first and copy_first) else 'page-break-before:always;'}}">
                             <t t-if="barcode">
-                                <div style="margin-top:4mm;">
-                                    <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 150, 'img_style': 'width:57mm;height:15mm;'}"/>
-                                    <div style="font-size:7.5pt;margin-top:0.5mm;"><span t-esc="barcode"/></div>
-                                </div>
+                                <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 150, 'img_style': 'width:55mm;height:13mm;'}"/>
+                                <div style="font-size:7.5pt;margin-top:0.5mm;"><span t-esc="barcode"/></div>
                             </t>
                             <t t-else="">
-                                <div style="font-size:7.5pt;color:#888;margin-top:4mm;">No barcode</div>
+                                <div style="font-size:7.5pt;color:#888;">No barcode</div>
                             </t>
-                            <div style="font-size:9pt;font-weight:bold;line-height:1.15;max-height:11mm;overflow:hidden;margin-top:2mm;">
+                            <div style="font-size:9pt;font-weight:bold;line-height:1.15;max-height:9mm;overflow:hidden;margin-top:1.5mm;">
                                 <span t-field="product.name"/>
                             </div>
                         </div>
