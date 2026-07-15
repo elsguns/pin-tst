@@ -9,7 +9,7 @@ class ProductLabelLayout(models.TransientModel):
     # Key deliberately has no 'x' so the base _compute_dimensions() leaves
     # columns/rows at 1 (this label is one-per-page, not a sheet grid).
     print_format = fields.Selection(
-        selection_add=[('l60_34', '60 x 34 mm')],
+        selection_add=[('l60_34', 'BARCODE - 60 x 34 mm')],
         ondelete={'l60_34': 'set default'},
     )
 
