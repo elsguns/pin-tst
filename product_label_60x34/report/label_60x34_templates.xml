@@ -19,13 +19,13 @@
                              barcode without margin-collapsing through the parent. -->
                         <div t-attf-style="box-sizing:border-box;width:100%;padding-top:3mm;text-align:center;font-family:Arial,sans-serif;{{'' if (barcode_and_qty_by_product_first and barcode_and_qty_first and copy_first) else 'page-break-before:always;'}}">
                             <t t-if="barcode">
-                                <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 150, 'img_style': 'width:55mm;height:13mm;'}"/>
-                                <div style="font-size:7.5pt;margin-top:0.5mm;"><span t-esc="barcode"/></div>
+                                <div t-out="barcode" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 660, 'height': 200, 'img_style': 'width:56mm;height:16mm;display:block;margin:0 auto;'}"/>
+                                <div style="font-size:9.5pt;margin-top:0.5mm;"><span t-esc="barcode"/></div>
                             </t>
                             <t t-else="">
-                                <div style="font-size:7.5pt;color:#888;">No barcode</div>
+                                <div style="font-size:9.5pt;color:#888;">No barcode</div>
                             </t>
-                            <div style="font-size:9pt;font-weight:bold;line-height:1.15;max-height:9mm;overflow:hidden;margin-top:1.5mm;">
+                            <div style="font-size:12pt;font-weight:bold;line-height:1.1;max-height:6mm;overflow:hidden;margin-top:1mm;">
                                 <span t-field="product.name"/>
                             </div>
                         </div>
