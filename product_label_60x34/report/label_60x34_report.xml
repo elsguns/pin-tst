@@ -10,7 +10,7 @@
         <!-- Match the client's original 60x34 paperformat exactly: 2mm margins,
              dpi 90, shrinking enabled -> printable area 56 x 30 mm. -->
         <field name="margin_top">2</field>
-        <field name="margin_bottom">2</field>
+        <field name="margin_bottom">0.5</field>
         <!-- Narrow side margins so the barcode can run wider (page size unchanged). -->
         <field name="margin_left">0.5</field>
         <field name="margin_right">0.5</field>
